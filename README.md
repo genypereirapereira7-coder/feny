@@ -19,26 +19,62 @@ Não é um produto vendido a terceiros — é o núcleo operacional interno da F
 
 ## Estado atual
 
-🏗️ **Fase de arquitetura.** Nenhum código de aplicação ainda.
+✅ **Fase 10 de 10 concluída — roadmap inteiro implementado.** A plataforma cobre o ciclo completo: cliente → orçamento → aprovação → projeto → cobrança (manual ou via Mercado Pago) → pagamento confirmado (webhook idempotente) → comissão → aviso automático por WhatsApp → recorrência → dashboard por papel. Esta última fase foi hardening: 2FA obrigatório para admin/gerente/financeiro, rate limiting no login e no webhook, upload validado até pelos bytes de verdade do arquivo (não só extensão), índices nas consultas mais pesadas, backup com restauração testada de verdade (não só "existe uma cópia"), health check que confere o banco, e CI (lint → testes → checagem de migrations → build) em `.github/workflows/ci.yml`. Detalhes de segurança em [SECURITY.md](SECURITY.md).
 
 A arquitetura técnica completa está em **[ARCHITECTURE.md](ARCHITECTURE.md)** — domínios, modelos de dados, máquinas de estado, regras de negócio (30/70, comissão, idempotência), integrações externas, segurança e roadmap de implementação por fases.
 
-## Stack planejada
+## Stack
 
 Python · Django · Django REST Framework · PostgreSQL · Monólito modular
 
+## Como rodar localmente
+
+Com Docker:
+
+```bash
+docker compose up
+```
+
+Sem Docker (Postgres local já rodando):
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements/dev.txt
+cp .env.example .env   # ajuste DATABASE_URL se necessário
+python manage.py migrate
+python manage.py create_default_groups
+python manage.py createsuperuser
+python manage.py runserver
+```
+
+Testes e lint:
+
+```bash
+python manage.py test
+ruff check apps config manage.py
+```
+
+Login (API): `POST /api/v1/auth/token/` com `username`/`password` (+ `otp_code` se 2FA estiver ativo) — devolve `access`/`refresh`. Identidade atual: `GET /api/v1/users/me/`. Admin/gerente/financeiro precisam configurar 2FA (`/auth/2fa/setup/` + `/auth/2fa/confirm/`) — ver [SECURITY.md](SECURITY.md).
+
+Envio de notificações pendentes (WhatsApp) e geração de cobranças recorrentes — rodar via cron em produção, chamar manualmente em dev:
+
+```bash
+python manage.py dispatch_notifications
+python manage.py generate_recurring_charges
+```
+
 ## Roadmap
 
-- [ ] **Fase 1** — Fundação (Django, PostgreSQL, Custom User, autenticação, RBAC base, Docker)
-- [ ] **Fase 2** — Clientes
-- [ ] **Fase 3** — Comercial (orçamentos e aprovação)
-- [ ] **Fase 4** — Projetos e máquina de estado
-- [ ] **Fase 5** — Financeiro (interno, sem integração externa ainda)
-- [ ] **Fase 6** — Mercado Pago (cobrança, webhooks, idempotência)
-- [ ] **Fase 7** — Evolution API (WhatsApp)
-- [ ] **Fase 8** — Cobrança recorrente
-- [ ] **Fase 9** — Dashboard e relatórios
-- [ ] **Fase 10** — Hardening (segurança, performance, backup, observabilidade)
+- [x] **Fase 1** — Fundação (Django, PostgreSQL, Custom User, autenticação, RBAC base, Docker)
+- [x] **Fase 2** — Clientes (CRUD, contatos, documentos com validação de CPF/CNPJ)
+- [x] **Fase 3** — Comercial (orçamentos, aprovação, auditoria)
+- [x] **Fase 4** — Projetos e máquina de estado (geração a partir de orçamento aprovado)
+- [x] **Fase 5** — Financeiro (Charge/Payment/Revenue/Expense/Commission, manual/interno)
+- [x] **Fase 6** — Mercado Pago (cobrança, webhook, idempotência, verificação server-to-server)
+- [x] **Fase 7** — Evolution API (notificações de cobrança emitida e pagamento confirmado)
+- [x] **Fase 8** — Cobrança recorrente (`RecurringSubscription`, geração automática de `Charge RECURRING`)
+- [x] **Fase 9** — Dashboard e relatórios (resumo por papel, receita/despesa por mês)
+- [x] **Fase 10** — Hardening (2FA, rate limiting, upload por magic number, índices, backup testado, health check, CI)
 
 ---
 

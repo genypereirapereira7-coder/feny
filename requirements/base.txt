@@ -1,0 +1,10 @@
+# Versões travadas nas que foram testadas — não faixas soltas. Pra atualizar,
+# suba uma de cada vez e rode a suíte de testes antes de travar a nova versão.
+
+Django==5.0.14
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-environ==0.11.2
+psycopg[binary]==3.2.13
+requests==2.34.2
+pyotp==2.10.0

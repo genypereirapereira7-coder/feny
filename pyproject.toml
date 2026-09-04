@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 110
+exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+# Pyflakes (F) pega bug de verdade — import/variável não usada, nome
+# indefinido. E4/E7/E9 é o núcleo de pycodestyle (sintaxe/erros óbvios).
+# Deliberadamente fora: RUF012 (marca toda `class Meta: fields = (...)` do
+# Django como "mutable default", falso positivo — tupla é imóvel);
+# DTZ011 (`date.today()` em campo `DateField` não tem o problema de fuso
+# horário que a regra assume — isso só importa pra `DateTimeField`); C408
+# (`dict(...)` em vez de `{...}` nos builders de fixture de teste é escolha
+# de estilo, não bug); RUF022 (`__all__` agrupado por domínio é proposital,
+# não teria motivo de ser alfabético).
+select = ["E4", "E7", "E9", "F"]

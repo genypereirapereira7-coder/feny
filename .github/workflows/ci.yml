@@ -1,0 +1,62 @@
+name: CI
+
+# ARCHITECTURE.md §18: "lint → testes → migrations check → build. Nenhum
+# deploy automático sem testes passando." Este workflow não faz deploy
+# nenhum — só garante que essas quatro etapas continuam passando a cada
+# push/PR; o deploy em si é manual (ou outro workflow, quando existir).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: feny_ci
+          POSTGRES_USER: feny
+          POSTGRES_PASSWORD: feny
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U feny"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      SECRET_KEY: ci-nao-usar-em-producao
+      DATABASE_URL: postgres://feny:feny@localhost:5432/feny_ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements/dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check apps config manage.py
+
+      - name: Checar migrations faltando
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Testes
+        run: python manage.py test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build da imagem Docker
+        run: docker build -t feny:ci .
