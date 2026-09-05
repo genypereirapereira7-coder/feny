@@ -96,8 +96,8 @@ O repositório já tem tudo que os dois serviços precisam: `Dockerfile` +
      `docker-entrypoint.sh` já lê `$PORT`. O mesmo entrypoint roda `migrate`
      e `collectstatic` a cada deploy, então não é um passo manual à parte.
 3. **Frontend** — outro serviço a partir do **mesmo repo**, Root Directory
-   `/frontend`. Railway usa Nixpacks (`npm run build` / `npm run start`,
-   servindo `dist/` via `serve`). Variável:
+   `/frontend`. Railway usa Nixpacks (`npm run build` / `npm run preview`,
+   servindo `dist/` via `vite preview --port $PORT --host 0.0.0.0`). Variável:
    - `VITE_API_BASE_URL=https://<domínio-do-backend>/api/v1` — o Vite embute
      isto em tempo de **build**, então qualquer troca depois exige um
      redeploy do frontend, não só reiniciar.

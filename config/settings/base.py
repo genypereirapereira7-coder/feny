@@ -1,6 +1,7 @@
 """Configurações comuns a todos os ambientes. Nada de segredo com valor real
 aqui dentro — tudo vem de variável de ambiente (ver ARCHITECTURE.md §13)."""
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -11,7 +12,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("SECRET_KEY")
+# `os.getenv` com fallback em vez de `env("SECRET_KEY")` — este último levanta
+# `ImproperlyConfigured` e derruba o processo se a variável não existir, o
+# que já quebrou o primeiro deploy antes de qualquer chance de configurar a
+# variável de verdade no painel do provedor. O fallback é obviamente inseguro
+# (mesma string pra qualquer instância que esquecer de configurar) — sempre
+# defina `SECRET_KEY` de verdade em staging/produção.
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-temporario-troque-em-producao")
 DEBUG = False
 
 INSTALLED_APPS = [
