@@ -9,6 +9,27 @@ from apps.projects.permissions import ProjectPermission
 from apps.users.models import Role
 
 
+def _filtrar(qs, params):
+    """Filtros de `?query=` pro frontend (spec de frontend §25) — mesmo
+    padrão manual do resto do projeto, sem `django-filter`."""
+    status = params.get("status")
+    if status:
+        qs = qs.filter(status=status)
+    customer = params.get("customer")
+    if customer:
+        qs = qs.filter(customer_id=customer)
+    responsible = params.get("responsible")
+    if responsible:
+        qs = qs.filter(responsible_id=responsible)
+    tipo = params.get("project_type")
+    if tipo:
+        qs = qs.filter(project_type=tipo)
+    prazo_ate = params.get("expected_delivery_before")
+    if prazo_ate:
+        qs = qs.filter(expected_delivery_at__lte=prazo_ate)
+    return qs
+
+
 class ProjectViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -32,7 +53,7 @@ class ProjectViewSet(
             qs = qs.filter(quotation__sales_rep=user)
         elif user.role == Role.DEVELOPER:
             qs = qs.filter(responsible=user)
-        return qs
+        return _filtrar(qs, self.request.query_params)
 
     @action(detail=True, methods=["post"], url_path="start-development")
     def start_development(self, request, pk=None):

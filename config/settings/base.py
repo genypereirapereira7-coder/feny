@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "corsheaders",
     "apps.core",
     "apps.users",
     "apps.audit",
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
     "apps.quotations",
     "apps.projects",
     "apps.finance",
+    "apps.support",
     "apps.mercadopago",
     "apps.notifications",
     "apps.whatsapp",
@@ -40,6 +42,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serve estáticos (admin) direto do processo Django — sem storage externo
+    # nem servidor à parte, suficiente pra uma API interna (Railway/Render não
+    # dão hospedagem de estático de graça pro `collectstatic` como o Nginx
+    # de um deploy tradicional daria).
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # Precisa vir antes do CommonMiddleware (exigência do django-cors-headers).
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -90,12 +99,26 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    # Hash no nome do arquivo + compressão — cache longo no navegador sem
+    # risco de servir versão velha depois de um deploy (whitenoise cuida do
+    # `Cache-Control` sozinho quando o storage é este).
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+
 # Dev: filesystem local. Produção: trocar por storage externo (S3-compatível)
 # via STORAGES["default"] — sem tocar em apps/documents/models.py (ARCHITECTURE.md §14).
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Frontend (React/Vite) roda em origem separada — CORS_ALLOWED_ORIGINS tem um
+# default de dev (a porta padrão do `npm run dev`) pra funcionar sem precisar
+# editar `.env`; staging/production sobrescrevem via variável de ambiente.
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
+CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

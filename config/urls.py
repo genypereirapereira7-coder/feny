@@ -15,6 +15,9 @@ urlpatterns = [
     path("api/v1/", include("apps.quotations.api.urls")),
     path("api/v1/", include("apps.projects.api.urls")),
     path("api/v1/finance/", include("apps.finance.api.urls")),
+    path("api/v1/support/", include("apps.support.api.urls")),
+    path("api/v1/audit/", include("apps.audit.api.urls")),
+    path("api/v1/settings/", include("apps.core.api.urls")),
     path("api/v1/dashboard/", include("apps.dashboard.api.urls")),
     path("api/v1/reports/", include("apps.reports.api.urls")),
     # Fora do /api/v1/ de propósito — webhook de provedor externo (ARCHITECTURE.md §12).

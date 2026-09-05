@@ -13,7 +13,10 @@ COPY requirements/ requirements/
 RUN pip install --no-cache-dir -r requirements/production.txt
 
 COPY . .
+RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+# $PORT vem do próprio provedor (Railway injeta na hora do deploy); 8000 é só
+# o fallback pra rodar o mesmo Dockerfile fora dele (docker run direto).
+CMD ["./docker-entrypoint.sh"]

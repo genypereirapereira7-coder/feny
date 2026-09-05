@@ -11,7 +11,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     genérico (ARCHITECTURE.md §25). Fica IsAuthenticated até um caso de uso
     concreto pedir mais."""
 
-    queryset = Document.objects.select_related("customer", "uploaded_by")
+    queryset = Document.objects.select_related("customer", "project", "uploaded_by")
     serializer_class = DocumentSerializer
     permission_classes = [IsAuthenticated]
 
@@ -20,4 +20,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         customer_id = self.request.query_params.get("customer")
         if customer_id:
             qs = qs.filter(customer_id=customer_id)
+        project_id = self.request.query_params.get("project")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
         return qs

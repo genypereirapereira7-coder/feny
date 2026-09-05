@@ -8,14 +8,15 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.core.permissions import role_required
 from apps.users import two_factor
 from apps.users.api.serializers import UserAdminSerializer, UserSerializer
-from apps.users.models import Role, User
+from apps.users.models import User
+from apps.users.permissions import UserPermission
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """`/api/v1/users/` — administração de contas. Só ADMIN.
+    """`/api/v1/users/` — administração de contas. Escrita é só ADMIN;
+    `list`/`retrieve` também abrem pra MANAGER (ver `permissions.py`).
 
     A ação `me` (própria identidade) é a única exceção: qualquer usuário
     autenticado pode consultar a si mesmo.
@@ -23,7 +24,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all().order_by("username")
     serializer_class = UserAdminSerializer
-    permission_classes = [role_required(Role.ADMIN)]
+    permission_classes = [UserPermission]
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def me(self, request: Request) -> Response:

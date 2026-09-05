@@ -215,3 +215,33 @@ class ProjectTransitionActionTests(ProjectApiTestCase):
 
         resposta = self.client.post(f"/api/v1/projects/{criado['id']}/start-development/")
         self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class ProjectFilterTests(ProjectApiTestCase):
+    """Frontend §25 — filtros por status/responsável."""
+
+    def _criar_projeto(self, status_inicial=ProjectStatus.IN_DEVELOPMENT) -> dict:
+        self.client.force_authenticate(self.gerente)
+        criado = self.client.post("/api/v1/projects/", self.payload).data
+        Project.objects.filter(id=criado["id"]).update(status=status_inicial)
+        return criado
+
+    def test_filtra_por_status(self):
+        self._criar_projeto(status_inicial=ProjectStatus.IN_DEVELOPMENT)
+        self.client.force_authenticate(self.gerente)
+
+        resposta = self.client.get("/api/v1/projects/?status=IN_DEVELOPMENT")
+        self.assertEqual(len(resposta.data["results"]), 1)
+
+        resposta = self.client.get("/api/v1/projects/?status=DELIVERED")
+        self.assertEqual(len(resposta.data["results"]), 0)
+
+    def test_filtra_por_responsavel(self):
+        self._criar_projeto()
+        self.client.force_authenticate(self.gerente)
+
+        resposta = self.client.get(f"/api/v1/projects/?responsible={self.dev.id}")
+        self.assertEqual(len(resposta.data["results"]), 1)
+
+        resposta = self.client.get(f"/api/v1/projects/?responsible={self.outro_dev.id}")
+        self.assertEqual(len(resposta.data["results"]), 0)

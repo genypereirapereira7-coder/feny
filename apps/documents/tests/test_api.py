@@ -104,3 +104,35 @@ class DocumentUploadApiTests(APITestCase):
         documento = Document.objects.get()
         self.assertEqual(documento.checksum_sha256, hashlib.sha256(conteudo).hexdigest())
         self.assertEqual(documento.size_bytes, len(conteudo))
+
+    def test_filtra_por_projeto(self):
+        """Frontend §26 — aba Documentos da tela de projeto."""
+        from apps.core.choices import PaymentMethod, ProjectType
+        from apps.customers.models import Customer, CustomerKind
+        from apps.projects.models import Project, ProjectStatus
+        from apps.quotations.models import Quotation
+
+        cliente = Customer.objects.create(
+            kind=CustomerKind.INDIVIDUAL, legal_name="Fulano", document="11144477735",
+            preferred_payment_method=PaymentMethod.BOLETO, created_by=self.usuario,
+        )
+        orcamento = Quotation.objects.create(
+            customer=cliente, sales_rep=self.usuario, service_type=ProjectType.WEBSITE,
+            description="x", amount="1000.00",
+        )
+        projeto = Project.objects.create(
+            customer=cliente, quotation=orcamento, name="Projeto X", project_type=ProjectType.WEBSITE,
+            responsible=self.usuario, amount="1000.00", status=ProjectStatus.APPROVED,
+        )
+        Document.objects.create(
+            project=projeto, category=DocumentCategory.PROJECT_FILE, original_filename="x.pdf",
+            mime_type="application/pdf", size_bytes=1, checksum_sha256="a", uploaded_by=self.usuario,
+        )
+        Document.objects.create(
+            category=DocumentCategory.OTHER, original_filename="y.pdf",
+            mime_type="application/pdf", size_bytes=1, checksum_sha256="b", uploaded_by=self.usuario,
+        )
+
+        resposta = self.client.get(f"/api/v1/documents/?project={projeto.id}")
+        self.assertEqual(len(resposta.data["results"]), 1)
+        self.assertEqual(resposta.data["results"][0]["original_filename"], "x.pdf")

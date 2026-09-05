@@ -63,6 +63,53 @@ python manage.py dispatch_notifications
 python manage.py generate_recurring_charges
 ```
 
+## Deploy no Railway
+
+> ⚠️ **Antes de publicar de verdade**: a tela de login do frontend está
+> desligada por conveniência de desenvolvimento (`frontend/src/App.tsx` tem a
+> rota `/login` comentada; `ProtectedRoute.tsx` não redireciona mais pra ela).
+> Publicar assim deixa o site sem nenhum jeito de autenticar quem visitar —
+> travado numa tela de "não foi possível entrar automaticamente" pra qualquer
+> pessoa, ou, se `VITE_AUTO_LOGIN_USERNAME`/`_PASSWORD` forem configuradas no
+> Railway, com a credencial de um usuário real embutida em texto puro no
+> JavaScript que qualquer visitante pode ler. Religue a tela de login (reverta
+> as duas mudanças acima) antes de expor a URL pra alguém além de você.
+
+O repositório já tem tudo que os dois serviços precisam: `Dockerfile` +
+`railway.json` na raiz (backend) e `frontend/railway.json` (frontend). São
+**dois serviços Railway apontando pro mesmo repositório**, cada um com uma
+"Root Directory" diferente:
+
+1. **Banco**: no projeto Railway, adicione um plugin **PostgreSQL** — ele
+   expõe `DATABASE_URL` sozinho, sem precisar copiar nada manualmente.
+2. **Backend** — novo serviço a partir do repo, Root Directory `/`. Railway
+   detecta o `Dockerfile` automaticamente. Variáveis:
+   - `DJANGO_SETTINGS_MODULE=config.settings.production`
+   - `SECRET_KEY` — gere com `python -c "import secrets; print(secrets.token_urlsafe(50))"`
+   - `DATABASE_URL` — referencie a variável do plugin Postgres (`${{Postgres.DATABASE_URL}}`)
+   - `ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS` — domínio público que o Railway
+     gera pra este serviço (`https://` na frente só no segundo)
+   - `CORS_ALLOWED_ORIGINS` — domínio público do serviço **frontend** (passo
+     seguinte; volte aqui depois de criá-lo)
+   - Opcionais: `MERCADOPAGO_*`, `EVOLUTION_API_*`, `SENTRY_DSN` (ver `.env.example`)
+   - `PORT` não precisa ser definida — o Railway injeta e o
+     `docker-entrypoint.sh` já lê `$PORT`. O mesmo entrypoint roda `migrate`
+     e `collectstatic` a cada deploy, então não é um passo manual à parte.
+3. **Frontend** — outro serviço a partir do **mesmo repo**, Root Directory
+   `/frontend`. Railway usa Nixpacks (`npm run build` / `npm run start`,
+   servindo `dist/` via `serve`). Variável:
+   - `VITE_API_BASE_URL=https://<domínio-do-backend>/api/v1` — o Vite embute
+     isto em tempo de **build**, então qualquer troca depois exige um
+     redeploy do frontend, não só reiniciar.
+4. Depois que os dois tiverem domínio público, ajuste `CORS_ALLOWED_ORIGINS`
+   (backend) e `VITE_API_BASE_URL` (frontend) um apontando pro outro e
+   redeploy os dois.
+5. Setup inicial (grupos de permissão + primeiro admin) — via [Railway CLI](https://docs.railway.com/guides/cli):
+   ```bash
+   railway run python manage.py create_default_groups
+   railway run python manage.py createsuperuser
+   ```
+
 ## Roadmap
 
 - [x] **Fase 1** — Fundação (Django, PostgreSQL, Custom User, autenticação, RBAC base, Docker)

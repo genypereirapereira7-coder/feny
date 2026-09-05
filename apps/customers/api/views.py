@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from apps.customers.api.serializers import CustomerContactSerializer, CustomerSerializer
@@ -10,6 +10,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.select_related("created_by").prefetch_related("contacts")
     serializer_class = CustomerSerializer
     permission_classes = [CustomerPermission]
+    # Busca (`?search=`) e ordenação (`?ordering=`) — frontend §19. Filtro
+    # nativo do DRF, sem dependência nova; `search` já normaliza acento/caixa
+    # via `icontains` do Postgres.
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["legal_name", "document", "email", "phone"]
+    ordering_fields = ["legal_name", "created_at"]
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

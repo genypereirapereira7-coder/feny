@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* Tema único, escuro — não é um "dark mode" alternável, é a única aparência
+   do app (pedido explícito: "cara a cara completa no modo escuro"). */
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-slate-950);
+  color: var(--color-slate-100);
+}
+
+::selection {
+  background-color: var(--color-indigo-500);
+  color: white;
+}

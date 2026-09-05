@@ -151,3 +151,26 @@ class QuotationApprovalFlowTests(QuotationApiTestCase):
         resposta = self.client.post(f"/api/v1/quotations/{criado['id']}/cancel/")
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertEqual(resposta.data["status"], QuotationStatus.CANCELLED)
+
+
+class QuotationFilterTests(QuotationApiTestCase):
+    """Frontend §22 — filtros por status/cliente/valor."""
+
+    def test_filtra_por_status(self):
+        self.client.force_authenticate(self.gerente)
+        self.client.post("/api/v1/quotations/", self.payload)
+
+        resposta = self.client.get("/api/v1/quotations/?status=APPROVED")
+        self.assertEqual(len(resposta.data["results"]), 0)
+
+        resposta = self.client.get("/api/v1/quotations/?status=DRAFT")
+        self.assertEqual(len(resposta.data["results"]), 1)
+
+    def test_filtra_por_faixa_de_valor(self):
+        self.client.force_authenticate(self.gerente)
+        self.client.post("/api/v1/quotations/", {**self.payload, "amount": "500.00"})
+        self.client.post("/api/v1/quotations/", {**self.payload, "amount": "50000.00"})
+
+        resposta = self.client.get("/api/v1/quotations/?amount_min=1000")
+        self.assertEqual(len(resposta.data["results"]), 1)
+        self.assertEqual(resposta.data["results"][0]["amount"], "50000.00")

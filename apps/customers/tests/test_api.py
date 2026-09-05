@@ -143,3 +143,29 @@ class CustomerContactApiTests(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resposta.data["results"]), 1)
         self.assertEqual(resposta.data["results"][0]["name"], "Contato 1")
+
+
+class CustomerSearchAndOrderingTests(APITestCase):
+    """Frontend §19 ("Buscar", "Ordenar") — filtro nativo do DRF."""
+
+    def setUp(self):
+        self.vendedor = User.objects.create_user(username="v1", password="senha-forte-123", role=Role.SALES)
+        Customer.objects.create(
+            kind=CustomerKind.INDIVIDUAL, legal_name="Ana Torres", document="11144477735",
+            preferred_payment_method=PaymentMethod.BOLETO, created_by=self.vendedor,
+        )
+        Customer.objects.create(
+            kind=CustomerKind.COMPANY, legal_name="Bento Comércio", document="11222333000181",
+            preferred_payment_method=PaymentMethod.CARD, created_by=self.vendedor,
+        )
+        self.client.force_authenticate(self.vendedor)
+
+    def test_busca_por_nome(self):
+        resposta = self.client.get("/api/v1/customers/?search=Torres")
+        self.assertEqual(len(resposta.data["results"]), 1)
+        self.assertEqual(resposta.data["results"][0]["legal_name"], "Ana Torres")
+
+    def test_ordena_por_nome_descendente(self):
+        resposta = self.client.get("/api/v1/customers/?ordering=-legal_name")
+        nomes = [c["legal_name"] for c in resposta.data["results"]]
+        self.assertEqual(nomes, sorted(nomes, reverse=True))

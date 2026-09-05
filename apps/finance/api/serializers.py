@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.core.choices import PaymentMethod
 from apps.finance import services
-from apps.finance.models import Charge, Commission, Expense, Payment, RecurringSubscription
+from apps.finance.models import Charge, Commission, Expense, Payment, RecurringSubscription, Revenue
 from apps.projects.models import Project
 
 
@@ -82,6 +82,13 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                 {campo: "Não é possível editar este campo de uma assinatura existente." for campo in campos_nao_editaveis}
             )
         return super().update(instance, validated_data)
+
+
+class RevenueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Revenue
+        fields = ("id", "source", "payment", "amount", "description", "received_at", "created_at")
+        read_only_fields = fields
 
 
 class CommissionSerializer(serializers.ModelSerializer):

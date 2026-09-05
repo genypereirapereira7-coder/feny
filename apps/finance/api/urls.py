@@ -6,6 +6,7 @@ from apps.finance.api.views import (
     CommissionViewSet,
     ExpenseViewSet,
     PaymentViewSet,
+    RevenueViewSet,
     SubscriptionViewSet,
 )
 
@@ -15,5 +16,6 @@ router.register("payments", PaymentViewSet, basename="payment")
 router.register("expenses", ExpenseViewSet, basename="expense")
 router.register("commissions", CommissionViewSet, basename="commission")
 router.register("subscriptions", SubscriptionViewSet, basename="subscription")
+router.register("revenues", RevenueViewSet, basename="revenue")
 
 urlpatterns = [path("", include(router.urls))]

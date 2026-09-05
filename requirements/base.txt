@@ -8,3 +8,4 @@ django-environ==0.11.2
 psycopg[binary]==3.2.13
 requests==2.34.2
 pyotp==2.10.0
+django-cors-headers==4.9.0

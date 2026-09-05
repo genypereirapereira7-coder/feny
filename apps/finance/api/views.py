@@ -10,9 +10,10 @@ from apps.finance.api.serializers import (
     ConfirmPaymentSerializer,
     ExpenseSerializer,
     PaymentSerializer,
+    RevenueSerializer,
     SubscriptionSerializer,
 )
-from apps.finance.models import Charge, Commission, Expense, Payment, RecurringSubscription
+from apps.finance.models import Charge, Commission, Expense, Payment, RecurringSubscription, Revenue
 from apps.finance.permissions import (
     ChargePermission,
     CommissionPermission,
@@ -30,6 +31,15 @@ class ChargeViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.G
     queryset = Charge.objects.select_related("project", "customer")
     serializer_class = ChargeSerializer
     permission_classes = [ChargePermission]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # `?project=`/`?customer=`/`?status=` — frontend §22/§26/§30.
+        for campo in ("project", "customer", "status"):
+            valor = self.request.query_params.get(campo)
+            if valor:
+                qs = qs.filter(**{campo if campo == "status" else f"{campo}_id": valor})
+        return qs
 
     @action(detail=False, methods=["post"], url_path="create-initial")
     def create_initial(self, request):
@@ -69,6 +79,22 @@ class PaymentViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.
 
     queryset = Payment.objects.select_related("charge")
     serializer_class = PaymentSerializer
+    permission_classes = [ChargePermission]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        charge_id = self.request.query_params.get("charge")
+        if charge_id:
+            qs = qs.filter(charge_id=charge_id)
+        return qs
+
+
+class RevenueViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    """Só leitura — livro-razão derivado de `finance.services.confirm_payment`,
+    nunca um cadastro manual (ver docstring de `Revenue`)."""
+
+    queryset = Revenue.objects.select_related("payment")
+    serializer_class = RevenueSerializer
     permission_classes = [ChargePermission]
 
 

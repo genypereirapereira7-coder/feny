@@ -10,7 +10,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = (
-            "id", "customer", "category", "file", "original_filename",
+            "id", "customer", "project", "category", "file", "original_filename",
             "mime_type", "size_bytes", "checksum_sha256", "uploaded_by",
             "created_at",
         )

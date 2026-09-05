@@ -52,6 +52,17 @@ class ChargePermissionTests(FinanceApiTestCase):
         resposta = self.client.post("/api/v1/finance/charges/create-initial/", {"project": str(self.projeto.id)})
         self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_filtra_por_projeto(self):
+        """Frontend §26 — aba Financeiro da tela de projeto."""
+        self.client.force_authenticate(self.financeiro)
+        self.client.post("/api/v1/finance/charges/create-initial/", {"project": str(self.projeto.id)})
+
+        resposta = self.client.get(f"/api/v1/finance/charges/?project={self.projeto.id}")
+        self.assertEqual(len(resposta.data["results"]), 1)
+
+        resposta_vazia = self.client.get("/api/v1/finance/charges/?project=00000000-0000-0000-0000-000000000000")
+        self.assertEqual(len(resposta_vazia.data["results"]), 0)
+
     def test_gerente_so_ve_nao_cria(self):
         self.client.force_authenticate(self.gerente)
         resposta_leitura = self.client.get("/api/v1/finance/charges/")
@@ -78,6 +89,48 @@ class ChargePermissionTests(FinanceApiTestCase):
         resposta_cancela = self.client.post(f"/api/v1/finance/charges/{outra_cobranca_pendente.id}/cancel/")
         self.assertEqual(resposta_cancela.status_code, status.HTTP_200_OK)
         self.assertEqual(resposta_cancela.data["status"], ChargeStatus.CANCELLED)
+
+
+class PaymentAndRevenueApiTests(FinanceApiTestCase):
+    """Frontend §31/§32 (histórico de pagamento na cobrança) e §38 (Receitas)."""
+
+    def test_filtra_pagamento_por_cobranca(self):
+        self.client.force_authenticate(self.financeiro)
+        cobranca = self.client.post("/api/v1/finance/charges/create-initial/", {"project": str(self.projeto.id)}).data
+        self.client.post(
+            f"/api/v1/finance/charges/{cobranca['id']}/confirm-payment/",
+            {"external_id": "mp-abc", "amount": "3000.00", "method": "PIX"},
+        )
+
+        resposta = self.client.get(f"/api/v1/finance/payments/?charge={cobranca['id']}")
+        self.assertEqual(len(resposta.data["results"]), 1)
+
+        resposta_vazia = self.client.get("/api/v1/finance/payments/?charge=00000000-0000-0000-0000-000000000000")
+        self.assertEqual(len(resposta_vazia.data["results"]), 0)
+
+    def test_pagamento_confirmado_gera_receita_visivel_na_api(self):
+        self.client.force_authenticate(self.financeiro)
+        cobranca = self.client.post("/api/v1/finance/charges/create-initial/", {"project": str(self.projeto.id)}).data
+        self.client.post(
+            f"/api/v1/finance/charges/{cobranca['id']}/confirm-payment/",
+            {"external_id": "mp-abc", "amount": "3000.00", "method": "PIX"},
+        )
+
+        resposta = self.client.get("/api/v1/finance/revenues/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resposta.data["results"]), 1)
+        self.assertEqual(resposta.data["results"][0]["amount"], "3000.00")
+        self.assertEqual(resposta.data["results"][0]["source"], "PROJECT")
+
+    def test_vendedor_nao_ve_receitas(self):
+        self.client.force_authenticate(self.vendedor)
+        resposta = self.client.get("/api/v1/finance/revenues/")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_gerente_ve_receitas(self):
+        self.client.force_authenticate(self.gerente)
+        resposta = self.client.get("/api/v1/finance/revenues/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
 
 
 class IssueChargeApiTests(FinanceApiTestCase):

@@ -49,16 +49,30 @@ class MeEndpointTests(APITestCase):
 
 
 class UserViewSetPermissionTests(APITestCase):
-    """Só ADMIN administra contas — ver apps/core/permissions.py."""
+    """Escrita é só ADMIN; MANAGER também lista/vê (ver apps/users/permissions.py)."""
 
     def setUp(self):
         self.admin = User.objects.create_user(username="admin1", password="senha-forte-123", role=Role.ADMIN)
+        self.gerente = User.objects.create_user(username="gerente2", password="senha-forte-123", role=Role.MANAGER)
         self.vendedor = User.objects.create_user(username="vendedor2", password="senha-forte-123", role=Role.SALES)
 
     def test_admin_lista_usuarios(self):
         self.client.force_authenticate(self.admin)
         resposta = self.client.get("/api/v1/users/")
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_gerente_lista_usuarios(self):
+        """Precisa pra escolher o responsável ao gerar um projeto (apps.projects)."""
+        self.client.force_authenticate(self.gerente)
+        resposta = self.client.get("/api/v1/users/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_gerente_nao_cria_usuario(self):
+        self.client.force_authenticate(self.gerente)
+        resposta = self.client.post(
+            "/api/v1/users/", {"username": "novo", "password": "senha-forte-123", "role": Role.SALES}
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_vendedor_nao_lista_usuarios(self):
         self.client.force_authenticate(self.vendedor)

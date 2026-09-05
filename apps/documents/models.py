@@ -32,15 +32,17 @@ class Document(BaseModel):
     O binário não mora no Postgres — `file` é resolvido pelo backend de
     storage configurado (filesystem em dev, storage externo em produção); o
     banco guarda só a referência e os metadados.
-
-    `project` fica de fora por enquanto — só entra na Fase 4, quando
-    `apps.projects.Project` existir (ARCHITECTURE.md §6.6 já antecipa os
-    dois relacionamentos; adicionar a FK antes da hora seria modelar em cima
-    de um app que ainda não existe).
     """
 
     customer = models.ForeignKey(
         "customers.Customer", null=True, blank=True, related_name="documents",
+        on_delete=models.SET_NULL,
+    )
+    # Ficou de fora até aqui — só fazia sentido quando a tela de projeto
+    # (frontend §26) precisou de verdade de "documentos deste projeto"
+    # (ARCHITECTURE.md §6.6 já previa os dois relacionamentos).
+    project = models.ForeignKey(
+        "projects.Project", null=True, blank=True, related_name="documents",
         on_delete=models.SET_NULL,
     )
     category = models.CharField(max_length=20, choices=DocumentCategory.choices)
