@@ -9,4 +9,6 @@ htmlcov
 staticfiles
 media
 .env
-frontend
+frontend/node_modules
+frontend/dist
+frontend/.env

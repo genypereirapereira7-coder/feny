@@ -75,58 +75,51 @@ python manage.py generate_recurring_charges
 > JavaScript que qualquer visitante pode ler. Religue a tela de login (reverta
 > as duas mudanças acima) antes de expor a URL pra alguém além de você.
 
-O repositório tem um `Dockerfile` + `railway.json` próprio em cada metade —
-raiz (backend) e `frontend/` (frontend) — de propósito: cada serviço builda
-via **Docker**, não via detecção automática de linguagem (Nixpacks), pra não
-depender de heurística nenhuma sobre o que tem em cada pasta. São **dois
-serviços Railway apontando pro mesmo repositório**, cada um com uma "Root
-Directory" diferente:
+**Um serviço só.** O `Dockerfile` da raiz builda o React (estágio 1, Node) e
+o Django do estágio 2 serve tanto a API quanto os arquivos do frontend já
+prontos — mesmo domínio pros dois, sem CORS entre eles, sem precisar de um
+segundo serviço Railway. `config/urls.py` manda qualquer rota que não seja
+`admin/`/`api/`/`health/` pro `index.html` do React (`apps/core/views.py::spa_index`),
+e o `WhiteNoiseMiddleware` serve os arquivos estáticos (`/assets/...`,
+`favicon.svg`) direto da pasta que o Dockerfile copiou (`frontend_dist/`).
 
 1. **Banco**: no projeto Railway, adicione um plugin **PostgreSQL** — ele
    expõe `DATABASE_URL` sozinho, sem precisar copiar nada manualmente.
-2. **Backend** — novo serviço a partir do repo, **Root Directory `/`**
-   (a raiz mesmo — deixe em branco ou digite `/`). Railway detecta o
-   `Dockerfile` da raiz. Variáveis:
+2. **Serviço**: novo serviço a partir do repo (Root Directory pode ficar em
+   branco/`/`, é a raiz mesmo). Railway detecta o `Dockerfile`. Variáveis:
    - `DJANGO_SETTINGS_MODULE=config.settings.production`
    - `SECRET_KEY` — gere com `python -c "import secrets; print(secrets.token_urlsafe(50))"`
      (sem isto, roda com um fallback inseguro em vez de quebrar — mas defina
      de verdade)
    - `DATABASE_URL` — referencie a variável do plugin Postgres (`${{Postgres.DATABASE_URL}}`)
-   - `CORS_ALLOWED_ORIGINS` — domínio público do serviço **frontend** (passo
-     seguinte; volte aqui depois de criá-lo)
    - `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` — normalmente **nem precisa
-     definir**: `config/settings/production.py` já inclui sozinho o domínio
-     que o próprio Railway gera (`RAILWAY_PUBLIC_DOMAIN`, injetado
-     automaticamente). Só defina isto à mão se usar um domínio próprio.
+     definir**: `production.py` já inclui sozinho o domínio que o próprio
+     Railway gera (`RAILWAY_PUBLIC_DOMAIN`, injetado automaticamente). Só
+     defina à mão se usar um domínio próprio.
+   - `CORS_ALLOWED_ORIGINS` não é necessário aqui — API e frontend estão no
+     mesmo domínio, então não existe requisição cross-origin nenhuma pra
+     liberar.
    - Opcionais: `MERCADOPAGO_*`, `EVOLUTION_API_*`, `SENTRY_DSN` (ver `.env.example`)
    - `PORT` não precisa ser definida — o Railway injeta e o
      `docker-entrypoint.sh` já lê `$PORT`. O mesmo entrypoint roda `migrate`
      e `collectstatic` a cada deploy, então não é um passo manual à parte.
-3. **Frontend** — outro serviço a partir do **mesmo repo**, **Root
-   Directory `frontend`** (sem barra na frente). Railway detecta o
-   `Dockerfile` dentro de `frontend/`, que builda e sobe `vite preview
-   --port $PORT --host 0.0.0.0`. Variável:
-   - `VITE_API_BASE_URL=https://<domínio-do-backend>/api/v1` — o Vite embute
-     isto em tempo de **build**; o `Dockerfile` do frontend já repassa a
-     variável do serviço pro build via `ARG`, então é só configurar no
-     painel e fazer deploy — não precisa de passo manual extra. Qualquer
-     troca depois exige um novo deploy do frontend, não só reiniciar.
-4. Depois que os dois tiverem domínio público, ajuste `CORS_ALLOWED_ORIGINS`
-   (backend) e `VITE_API_BASE_URL` (frontend) um apontando pro outro e
-   redeploy os dois.
-5. Setup inicial (grupos de permissão + primeiro admin) — via [Railway CLI](https://docs.railway.com/guides/cli):
+   - `VITE_API_BASE_URL` também não precisa ser definida: o build já usa
+     `/api/v1` (caminho relativo, mesmo domínio) por padrão. Só sobrescreva
+     via `--build-arg`/variável de build se a API algum dia morar num
+     domínio à parte.
+3. Deploy. Quando terminar, gere o domínio público em **Settings →
+   Networking → Generate Domain** — é a mesma URL pra tela do sistema e pra
+   API (`https://<domínio>/api/v1/...`).
+4. Setup inicial (grupos de permissão + primeiro admin) — via [Railway CLI](https://docs.railway.com/guides/cli):
    ```bash
    railway run python manage.py create_default_groups
    railway run python manage.py createsuperuser
    ```
 
-Se algum dos dois serviços não construir automaticamente a partir do
-`Dockerfile` certo, confira nas Settings dele: **Root Directory** precisa
-bater exatamente com o serviço (`/` no backend, `frontend` no frontend) e,
-em Build, o **Builder** deve estar como "Dockerfile" (não "Nixpacks") —
-Railway às vezes mantém a escolha antiga de builder de quando o serviço foi
-criado, mesmo depois de mudar o Root Directory; force pra Dockerfile
-manualmente se isso acontecer.
+Se o serviço não buildar a partir do `Dockerfile` automaticamente, confira
+em Settings → Build se o **Builder** está como "Dockerfile" (não
+"Nixpacks") — Railway às vezes mantém a escolha antiga de builder de quando
+o serviço foi criado; force manualmente se isso acontecer.
 
 ## Roadmap
 

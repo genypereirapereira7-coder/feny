@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
-from apps.core.views import health
+from apps.core.views import health, spa_index
 from apps.mercadopago.webhooks import MercadoPagoWebhookView
 
 urlpatterns = [
@@ -26,3 +26,9 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Sempre por último: qualquer rota que não seja admin/api/health cai no SPA
+# do React (deploy de serviço único — Dockerfile builda o frontend e o
+# Django serve o `dist/`). Os assets (`/assets/...`) são servidos pelo
+# WhiteNoiseMiddleware via `WHITENOISE_ROOT`, não por esta rota.
+urlpatterns += [re_path(r"^.*$", spa_index)]

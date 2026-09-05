@@ -114,6 +114,15 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
+# `frontend_dist/` só existe dentro da imagem Docker (o Dockerfile builda o
+# React no primeiro estágio e copia o `dist/` pra cá — ver Dockerfile). Sem a
+# checagem `is_dir()`, rodar localmente sem ter buildado o frontend derrubaria
+# o whitenoise na inicialização. Serve os arquivos na raiz do domínio (não sob
+# `/static/`) porque é onde o `index.html` do Vite espera achar seus assets.
+FRONTEND_DIST_DIR = BASE_DIR / "frontend_dist"
+if FRONTEND_DIST_DIR.is_dir():
+    WHITENOISE_ROOT = FRONTEND_DIST_DIR
+
 # Dev: filesystem local. Produção: trocar por storage externo (S3-compatível)
 # via STORAGES["default"] — sem tocar em apps/documents/models.py (ARCHITECTURE.md §14).
 MEDIA_URL = "media/"
