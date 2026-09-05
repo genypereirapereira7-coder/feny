@@ -45,3 +45,21 @@ class EnsureDefaultAccountTests(TestCase):
 
         self.assertTrue(User.objects.filter(username="outra-conta").exists())
         self.assertFalse(User.objects.filter(username="gerente").exists())
+
+    def test_zera_2fa_de_uma_conta_que_ja_tinha_configurado(self):
+        """Cenário real que travou o dono do sistema: a conta tinha 2FA
+        configurado de uma sessão de navegador anterior, e continuava
+        pedindo código mesmo depois da obrigatoriedade por papel ter sido
+        desligada — `LoginView` olha `two_factor_enabled` na conta, não a
+        regra de papel."""
+        User.objects.create_user(
+            username="gerente", password="senha-antiga-123", role=Role.MANAGER,
+            two_factor_enabled=True, two_factor_secret="ALGUMSEGREDO",
+        )
+
+        with mock.patch.dict("os.environ", {"DEFAULT_ACCOUNT_PASSWORD": "senha-nova-456"}):
+            call_command("ensure_default_account", stdout=StringIO())
+
+        usuario = User.objects.get(username="gerente")
+        self.assertFalse(usuario.two_factor_enabled)
+        self.assertEqual(usuario.two_factor_secret, "")
