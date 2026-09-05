@@ -16,6 +16,7 @@ import { CommissionsPage } from "./routes/finance/CommissionsPage"
 import { ExpensesPage } from "./routes/finance/ExpensesPage"
 import { RevenuesPage } from "./routes/finance/RevenuesPage"
 import { SubscriptionsPage } from "./routes/finance/SubscriptionsPage"
+import { LoginPage } from "./routes/LoginPage"
 import { ProjectDetailPage } from "./routes/projects/ProjectDetailPage"
 import { ProjectsPage } from "./routes/projects/ProjectsPage"
 import { QuotationDetailPage } from "./routes/quotations/QuotationDetailPage"
@@ -34,11 +35,7 @@ export default function App() {
         <ToastProvider>
           <AuthProvider>
             <Routes>
-              {/* Tela de login desligada "por enquanto" (a pedido) — o
-                  componente continua em `./routes/LoginPage`, intacto, pra
-                  religar depois: descomente a linha abaixo e reverta
-                  `ProtectedRoute.tsx` pra `<Navigate to="/login" replace />`. */}
-              {/* <Route path="/login" element={<LoginPage />} /> */}
+              <Route path="/login" element={<LoginPage />} />
 
               <Route element={<ProtectedRoute />}>
                 <Route path="/2fa/configurar" element={<TwoFactorSetupPage />} />

@@ -65,15 +65,14 @@ python manage.py generate_recurring_charges
 
 ## Deploy no Railway
 
-> ⚠️ **Antes de publicar de verdade**: a tela de login do frontend está
-> desligada por conveniência de desenvolvimento (`frontend/src/App.tsx` tem a
-> rota `/login` comentada; `ProtectedRoute.tsx` não redireciona mais pra ela).
-> Publicar assim deixa o site sem nenhum jeito de autenticar quem visitar —
-> travado numa tela de "não foi possível entrar automaticamente" pra qualquer
-> pessoa, ou, se `VITE_AUTO_LOGIN_USERNAME`/`_PASSWORD` forem configuradas no
-> Railway, com a credencial de um usuário real embutida em texto puro no
-> JavaScript que qualquer visitante pode ler. Religue a tela de login (reverta
-> as duas mudanças acima) antes de expor a URL pra alguém além de você.
+> A tela de login está ativa por padrão — qualquer visitante sem sessão cai
+> nela. `VITE_AUTO_LOGIN_USERNAME`/`_PASSWORD` (opcional, só em
+> `frontend/.env`, nunca commitado) pulam essa tela **só na máquina onde essa
+> variável existe**: sem `.env`, o Vite elimina esse código inteiro do bundle
+> (dead-code elimination — nada de credencial ou nome de variável sobra no
+> JS enviado ao navegador). **Nunca configure essas duas variáveis nas
+> Variables do serviço no Railway** — lá elas ficariam embutidas em texto
+> puro no JavaScript que qualquer visitante pode ler.
 
 **Um serviço só.** O `Dockerfile` da raiz builda o React (estágio 1, Node) e
 o Django do estágio 2 serve tanto a API quanto os arquivos do frontend já
