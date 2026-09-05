@@ -5,20 +5,23 @@ from .base import env
 
 DEBUG = False
 
+# Aceita qualquer Host (a pedido) — Django não faz mais nenhuma validação do
+# cabeçalho Host nesta instância. Isto desliga uma proteção de verdade contra
+# ataques de Host header (cache/password-reset poisoning); manter restrito ao
+# domínio real (a lógica de `RAILWAY_PUBLIC_DOMAIN` abaixo fazia isso sozinho)
+# é o que ARCHITECTURE.md §13 recomenda. Reverter é só trocar a linha de volta
+# pra `env.list("ALLOWED_HOSTS", default=[])`.
+ALLOWED_HOSTS = ["*"]
+
 # `env.list(...)` sem `default` levanta `ImproperlyConfigured` e derruba o
 # processo se a variável não existir — mesmo problema que já resolvemos pro
-# SECRET_KEY. Aqui o fallback seguro é lista vazia (Django recusa toda
-# requisição, nunca aceita qualquer host por omissão) MAIS o domínio público
-# que o Railway injeta sozinho (`RAILWAY_PUBLIC_DOMAIN`) — assim o primeiro
-# deploy já funciona no domínio que o próprio Railway gerou, sem precisar
-# configurar `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` manualmente antes de saber
-# qual vai ser esse domínio.
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+# SECRET_KEY. CSRF_TRUSTED_ORIGINS não aceita "*" (Django exige origem com
+# esquema), então continua vindo de env + o domínio que o Railway injeta
+# sozinho (`RAILWAY_PUBLIC_DOMAIN`).
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 RAILWAY_PUBLIC_DOMAIN = env("RAILWAY_PUBLIC_DOMAIN", default="")
 if RAILWAY_PUBLIC_DOMAIN:
-    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
     CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
 
 SECURE_SSL_REDIRECT = True
