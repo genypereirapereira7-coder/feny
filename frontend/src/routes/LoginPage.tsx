@@ -4,11 +4,15 @@ import { useNavigate } from "react-router-dom"
 import { Button, Field, Input } from "../components/ui"
 import { LoginError, useAuth } from "../lib/auth"
 
+// Conta única deste sistema — sem tela de escolher usuário, só senha
+// (a pedido). Se um dia mais de uma pessoa precisar de conta própria, é só
+// voltar a pedir usuário aqui; o backend já suporta isso sem mudança nenhuma.
+const USUARIO_UNICO = "gerente"
+
 export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [otpCode, setOtpCode] = useState("")
@@ -21,7 +25,7 @@ export function LoginPage() {
     setErro(null)
     setEnviando(true)
     try {
-      const { requires2faSetup } = await login(username, password, precisaDeOtp ? otpCode : undefined)
+      const { requires2faSetup } = await login(USUARIO_UNICO, password, precisaDeOtp ? otpCode : undefined)
       navigate(requires2faSetup ? "/2fa/configurar" : "/", { replace: true })
     } catch (e) {
       if (e instanceof LoginError) {
@@ -46,19 +50,6 @@ export function LoginPage() {
         </div>
 
         <div className="mb-4">
-          <Field label="Usuário">
-            <Input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              disabled={precisaDeOtp}
-              autoFocus
-              required
-            />
-          </Field>
-        </div>
-
-        <div className="mb-4">
           <Field label="Senha">
             <div className="relative">
               <Input
@@ -68,6 +59,7 @@ export function LoginPage() {
                 autoComplete="current-password"
                 disabled={precisaDeOtp}
                 className="pr-10"
+                autoFocus
                 required
               />
               <button
@@ -106,7 +98,7 @@ export function LoginPage() {
         </Button>
 
         <p className="mt-4 text-center text-xs text-slate-500">
-          Esqueceu a senha? Fale com um administrador — a redefinição ainda não é self-service.
+          Esqueceu a senha? A redefinição ainda não é self-service.
         </p>
       </form>
     </div>
