@@ -2,25 +2,27 @@ import pyotp
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users import two_factor
 from apps.users.models import Role, User
 
 
 class TwoFactorHelpersTests(APITestCase):
-    def test_precisa_configurar_2fa_para_papel_obrigatorio_sem_2fa(self):
-        gerente = User.objects.create_user(username="g1", password="senha-forte-123", role=Role.MANAGER)
-        self.assertTrue(two_factor.precisa_configurar_2fa(gerente))
+    """2FA obrigatório por papel está desligado a pedido do dono do sistema
+    (ver docstring de `PAPEIS_COM_2FA_OBRIGATORIO`) — `precisa_configurar_2fa`
+    nunca força ninguém, não importa o papel."""
+
+    def test_nenhum_papel_e_forcado_a_configurar(self):
+        for role in (Role.ADMIN, Role.MANAGER, Role.FINANCE, Role.SALES):
+            usuario = User.objects.create_user(username=f"u-{role}", password="senha-forte-123", role=role)
+            self.assertFalse(two_factor.precisa_configurar_2fa(usuario))
 
     def test_nao_precisa_configurar_se_ja_tem_2fa_ativo(self):
         gerente = User.objects.create_user(
             username="g1", password="senha-forte-123", role=Role.MANAGER, two_factor_enabled=True,
         )
         self.assertFalse(two_factor.precisa_configurar_2fa(gerente))
-
-    def test_papel_sem_2fa_obrigatorio_nao_precisa(self):
-        vendedor = User.objects.create_user(username="v1", password="senha-forte-123", role=Role.SALES)
-        self.assertFalse(two_factor.precisa_configurar_2fa(vendedor))
 
     def test_verificar_codigo_correto(self):
         secret = two_factor.gerar_segredo()
@@ -49,18 +51,25 @@ class LoginFlowTests(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertFalse(resposta.data["requires_2fa_setup"])
 
-    def test_papel_com_2fa_obrigatorio_ainda_nao_configurado_loga_mas_sinaliza(self):
+    def test_papel_que_antes_exigia_2fa_agora_loga_direto(self):
+        """MANAGER estava em `PAPEIS_COM_2FA_OBRIGATORIO`; com o requisito
+        desligado, login normal já libera acesso completo, sem passo extra."""
         resposta = self.client.post(
             reverse("token_obtain_pair"), {"username": "g1", "password": "senha-forte-123"},
         )
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        self.assertTrue(resposta.data["requires_2fa_setup"])
+        self.assertFalse(resposta.data["requires_2fa_setup"])
 
-    def test_token_com_2fa_pendente_so_acessa_rotas_permitidas(self):
-        login = self.client.post(
-            reverse("token_obtain_pair"), {"username": "g1", "password": "senha-forte-123"},
-        )
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
+    def test_token_com_claim_pendente_so_acessa_rotas_permitidas(self):
+        """A trava em si (`TwoFactorAwareJWTAuthentication`) não foi removida
+        — só nada mais a aciona automaticamente. Constrói o token manualmente
+        (como `_emitir_tokens` fazia) pra confirmar que, se algum dia isto for
+        reativado, a restrição de rotas ainda funciona."""
+        refresh = RefreshToken.for_user(self.gerente)
+        refresh["requires_2fa_setup"] = True
+        refresh.access_token["requires_2fa_setup"] = True
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         bloqueado = self.client.get("/api/v1/quotations/")
         self.assertEqual(bloqueado.status_code, status.HTTP_401_UNAUTHORIZED)

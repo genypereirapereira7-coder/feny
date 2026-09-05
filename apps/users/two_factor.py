@@ -1,13 +1,17 @@
-"""TOTP (2FA) — ARCHITECTURE.md §13: "2FA obrigatório para role in (ADMIN,
-MANAGER, FINANCE)". Toda a lógica de segredo/código mora aqui, num lugar só
-— nem a view nem o `authentication.py` calculam nada de TOTP diretamente.
+"""TOTP (2FA). Toda a lógica de segredo/código mora aqui, num lugar só — nem
+a view nem o `authentication.py` calculam nada de TOTP diretamente.
+
+2FA obrigatório por papel desligado a pedido do dono do sistema (queria
+acesso direto, sem passo extra, sendo o único usuário real por enquanto).
+O mecanismo continua funcionando pra quem configurar por conta própria via
+`/auth/2fa/setup/` — só não é mais forçado em ninguém. Pra reativar a
+obrigatoriedade: `PAPEIS_COM_2FA_OBRIGATORIO = (Role.ADMIN, Role.MANAGER,
+Role.FINANCE)`.
 """
 
 import pyotp
 
-from apps.users.models import Role
-
-PAPEIS_COM_2FA_OBRIGATORIO = (Role.ADMIN, Role.MANAGER, Role.FINANCE)
+PAPEIS_COM_2FA_OBRIGATORIO = ()
 
 
 def precisa_configurar_2fa(user) -> bool:
