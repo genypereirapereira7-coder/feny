@@ -5,8 +5,21 @@ from .base import env
 
 DEBUG = False
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
+# `env.list(...)` sem `default` levanta `ImproperlyConfigured` e derruba o
+# processo se a variável não existir — mesmo problema que já resolvemos pro
+# SECRET_KEY. Aqui o fallback seguro é lista vazia (Django recusa toda
+# requisição, nunca aceita qualquer host por omissão) MAIS o domínio público
+# que o Railway injeta sozinho (`RAILWAY_PUBLIC_DOMAIN`) — assim o primeiro
+# deploy já funciona no domínio que o próprio Railway gerou, sem precisar
+# configurar `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` manualmente antes de saber
+# qual vai ser esse domínio.
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+RAILWAY_PUBLIC_DOMAIN = env("RAILWAY_PUBLIC_DOMAIN", default="")
+if RAILWAY_PUBLIC_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
