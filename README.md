@@ -98,22 +98,28 @@ e o `WhiteNoiseMiddleware` serve os arquivos estáticos (`/assets/...`,
    - `CORS_ALLOWED_ORIGINS` não é necessário aqui — API e frontend estão no
      mesmo domínio, então não existe requisição cross-origin nenhuma pra
      liberar.
+   - `DEFAULT_ACCOUNT_PASSWORD` — a senha da conta única do sistema (usuário
+     fixo `gerente`, tela de login só pede senha). **Obrigatória**: sem ela,
+     `ensure_default_account` não cria/atualiza a conta em nenhum deploy, e o
+     login falha (foi exatamente isto que aconteceu no primeiro deploy: a
+     senha só existia no banco local, nunca no do Railway). Trocar esta
+     variável e fazer redeploy também serve pra trocar a senha depois.
+   - Opcional: `DEFAULT_ACCOUNT_USERNAME` (default `gerente`) — só se quiser
+     outro nome de usuário fixo por trás da tela.
    - Opcionais: `MERCADOPAGO_*`, `EVOLUTION_API_*`, `SENTRY_DSN` (ver `.env.example`)
    - `PORT` não precisa ser definida — o Railway injeta e o
-     `docker-entrypoint.sh` já lê `$PORT`. O mesmo entrypoint roda `migrate`
-     e `collectstatic` a cada deploy, então não é um passo manual à parte.
+     `docker-entrypoint.sh` já lê `$PORT`. O mesmo entrypoint roda `migrate`,
+     `create_default_groups` e `ensure_default_account` a cada deploy — não
+     é um passo manual à parte, nem depende de rodar nada pelo Railway CLI.
    - `VITE_API_BASE_URL` também não precisa ser definida: o build já usa
      `/api/v1` (caminho relativo, mesmo domínio) por padrão. Só sobrescreva
      via `--build-arg`/variável de build se a API algum dia morar num
      domínio à parte.
 3. Deploy. Quando terminar, gere o domínio público em **Settings →
    Networking → Generate Domain** — é a mesma URL pra tela do sistema e pra
-   API (`https://<domínio>/api/v1/...`).
-4. Setup inicial (grupos de permissão + primeiro admin) — via [Railway CLI](https://docs.railway.com/guides/cli):
-   ```bash
-   railway run python manage.py create_default_groups
-   railway run python manage.py createsuperuser
-   ```
+   API (`https://<domínio>/api/v1/...`). Primeiro login: só a senha de
+   `DEFAULT_ACCOUNT_PASSWORD` — o sistema pede pra configurar 2FA na hora
+   (conta `MANAGER`, 2FA obrigatório por papel).
 
 Se o serviço não buildar a partir do `Dockerfile` automaticamente, confira
 em Settings → Build se o **Builder** está como "Dockerfile" (não
