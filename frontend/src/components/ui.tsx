@@ -132,6 +132,14 @@ const CATEGORIA_POR_STATUS: Record<string, CategoriaStatus> = {
   OVERDUE: "erro",
   IGNORED: "neutro",
   DRAFT: "neutro",
+  // Leads do site (apps/leads/models.py::LeadStatus): "novo" e "em contato"
+  // são fila de trabalho (âmbar), qualificado/convertido são avanço real
+  // (verde) e descartado é histórico encerrado, não erro.
+  NEW: "espera",
+  CONTACTED: "espera",
+  QUALIFIED: "sucesso",
+  CONVERTED: "sucesso",
+  DISCARDED: "neutro",
 }
 
 const ESTILO_POR_CATEGORIA: Record<CategoriaStatus, string> = {
@@ -149,14 +157,17 @@ function IconeStatus({ categoria }: { categoria: CategoriaStatus }) {
   return <Circle size={tamanho} />
 }
 
-export function StatusBadge({ status }: { status: string }) {
+/** `label` cobre o caso em que a tela já tem o nome do status em português
+ * (ex.: Leads) — sem ele, o padrão continua sendo o código cru do backend,
+ * como nas telas antigas. */
+export function StatusBadge({ status, label }: { status: string; label?: string }) {
   const categoria = CATEGORIA_POR_STATUS[status] ?? "neutro"
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ESTILO_POR_CATEGORIA[categoria]}`}
     >
       <IconeStatus categoria={categoria} />
-      {status.replaceAll("_", " ").toLowerCase()}
+      {label ?? status.replaceAll("_", " ").toLowerCase()}
     </span>
   )
 }

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft } from "lucide-react"
 import { type FormEvent, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { PAINEL } from "../../lib/rotas"
 import { Button, Card, ConfirmDialog, ErrorState, Field, Modal, Spinner, StatusBadge, Textarea } from "../../components/ui"
 import { api } from "../../lib/api"
 import { useAuth } from "../../lib/auth"
@@ -57,7 +58,7 @@ export function QuotationDetailPage() {
     <div className="mx-auto max-w-2xl">
       <button
         type="button"
-        onClick={() => navigate("/orcamentos")}
+        onClick={() => navigate(`${PAINEL}/orcamentos`)}
         className="mb-4 flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200"
       >
         <ArrowLeft size={14} /> Orçamentos

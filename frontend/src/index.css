@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 /* Tema único, escuro — não é um "dark mode" alternável, é a única aparência
    do app (pedido explícito: "cara a cara completa no modo escuro"). */
 body {

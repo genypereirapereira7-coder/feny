@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft } from "lucide-react"
 import { type FormEvent, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { PAINEL } from "../../lib/rotas"
 import { DocumentsPanel } from "../../components/DocumentsPanel"
 import {
   Button,
@@ -56,7 +57,7 @@ export function CustomerDetailPage() {
     <div className="mx-auto max-w-5xl">
       <button
         type="button"
-        onClick={() => navigate("/clientes")}
+        onClick={() => navigate(`${PAINEL}/clientes`)}
         className="mb-4 flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200"
       >
         <ArrowLeft size={14} /> Clientes

@@ -1,0 +1,515 @@
+/* Landing da Feny — uma tela só, fundo em vídeo controlado pelo mouse.
+ *
+ * Três camadas empilhadas, do fundo pra frente: vídeo (z 0), véu escuro +
+ * grão (z 1) e conteúdo (z 2). O véu não é enfeite: o vídeo tem quadros
+ * claros (a cena da janela) e quadros escuros, e sem ele o texto branco
+ * sumiria em metade da linha do tempo. */
+
+:root {
+  --tinta: #05060a;
+  --papel: #f4f6fb;
+  --papel-2: #a8b0c2;
+  --marca: #5b8cff;
+  --curva: cubic-bezier(0.16, 1, 0.3, 1);
+  --fonte: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --margem: clamp(1.25rem, 6vw, 6rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--tinta);
+  color: var(--papel);
+  font-family: var(--fonte);
+  -webkit-font-smoothing: antialiased;
+}
+
+video {
+  display: block;
+}
+
+/* ------------------------------------------------------------------ fundo */
+
+.fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  /* `cover` corta as bordas em vez de deformar a cena. Vídeo esticado é o
+     erro mais visível que um fundo em vídeo pode ter. */
+  object-fit: cover;
+  /* Nasce quase invisível; o script revela quando há quadro pronto pra
+     mostrar — sem isto, a primeira pintura é um retângulo preto. */
+  opacity: 0;
+  transition: opacity 1.2s var(--curva);
+}
+
+.fundo.is-pronto {
+  opacity: 1;
+}
+
+.veu,
+.grao {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.veu {
+  /* Mais escuro à esquerda e embaixo, onde o texto mora; quase limpo no canto
+     superior direito, pra a cena continuar visível. */
+  background:
+    linear-gradient(to right, rgb(5 6 10 / 0.92) 0%, rgb(5 6 10 / 0.72) 45%, rgb(5 6 10 / 0.35) 100%),
+    linear-gradient(to top, rgb(5 6 10 / 0.85) 0%, transparent 55%);
+}
+
+.grao {
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23r)'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------------- topo */
+
+.topo {
+  position: fixed;
+  z-index: 3;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.75rem var(--margem);
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--papel);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.marca__ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--marca);
+  box-shadow: 0 0 18px var(--marca);
+}
+
+.topo__acoes {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
+}
+
+.link {
+  color: var(--papel-2);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 0.3s var(--curva);
+}
+
+.link:hover {
+  color: var(--papel);
+}
+
+.botao {
+  padding: 0.7rem 1.3rem;
+  border: 1px solid rgb(244 246 251 / 0.18);
+  border-radius: 999px;
+  background: rgb(244 246 251 / 0.06);
+  backdrop-filter: blur(10px);
+  color: var(--papel);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.3s var(--curva),
+    border-color 0.3s var(--curva),
+    transform 0.3s var(--curva);
+}
+
+.botao:hover {
+  transform: translateY(-1px);
+  border-color: rgb(244 246 251 / 0.4);
+  background: rgb(244 246 251 / 0.12);
+}
+
+/* -------------------------------------------------------------- capítulos */
+
+/* A altura extra é a régua da rolagem: 320vh de curso pra o vídeo andar do
+   começo ao fim. Menos que isso e o filme passa rápido demais pra ler o
+   texto; muito mais e a pessoa rola achando que a página travou. */
+.filme {
+  position: relative;
+  z-index: 2;
+  height: 320vh;
+}
+
+/* `sticky` e não `fixed`: assim a tela solta o topo sozinha quando a seção
+   acaba, sem precisar de JavaScript pra trocar de posicionamento no meio da
+   rolagem — que é onde esse tipo de efeito costuma tremer. */
+.filme__tela {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 100svh;
+  padding: 0 var(--margem);
+  overflow: hidden;
+}
+
+/* Os três capítulos ocupam a mesma célula da grade — um por cima do outro —
+   pra a troca ser um dissolver no lugar, sem a página pular de altura. */
+.capitulos {
+  display: grid;
+  max-width: 46rem;
+}
+
+.capitulo {
+  grid-area: 1 / 1;
+  /* O `will-change` avisa o navegador que isto vai se mover, pra ele preparar
+     a camada uma vez em vez de a cada troca. */
+  opacity: 0;
+  transform: translate3d(0, 1.5rem, 0);
+  visibility: hidden;
+  will-change: opacity, transform;
+  transition:
+    opacity 0.6s var(--curva),
+    transform 0.6s var(--curva),
+    visibility 0.6s;
+}
+
+.capitulo.is-ativo {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}
+
+.capitulo__etiqueta {
+  margin: 0 0 1.25rem;
+  color: var(--marca);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.capitulo__titulo {
+  margin: 0;
+  font-size: clamp(2.25rem, 1rem + 4.6vw, 4.5rem);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+}
+
+.capitulo__texto {
+  max-width: 34rem;
+  margin: 1.75rem 0 0;
+  color: var(--papel-2);
+  font-size: clamp(0.95rem, 0.85rem + 0.3vw, 1.125rem);
+  line-height: 1.7;
+}
+
+/* ------------------------------------------------------------------- dica */
+
+.dica {
+  position: absolute;
+  bottom: clamp(5.5rem, 12vh, 8rem);
+  left: var(--margem);
+  right: var(--margem);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0;
+  color: var(--papel-2);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: opacity 0.6s var(--curva);
+}
+
+.dica.is-oculta {
+  opacity: 0;
+}
+
+/* As setas se afastam e voltam devagar — o próprio gesto que a frase pede. */
+.dica__seta {
+  display: inline-block;
+  animation: respirar 2.4s var(--curva) infinite;
+}
+
+.dica__seta:last-child {
+  animation-delay: 1.2s;
+}
+
+/* A seta desce e volta — o próprio gesto que a frase pede. */
+@keyframes respirar {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ régua */
+
+.regua {
+  position: absolute;
+  inset: auto var(--margem) clamp(1.5rem, 4vh, 2.5rem);
+}
+
+.regua__trilho {
+  height: 1px;
+  background: rgb(244 246 251 / 0.14);
+}
+
+.regua__preenchimento {
+  height: 100%;
+  background: linear-gradient(90deg, var(--marca), #9db9ff);
+  /* `scaleX` em vez de largura: transformação não obriga o navegador a
+     recalcular o layout a cada quadro do movimento do mouse. */
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.regua__marcas {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  color: var(--papel-2);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.regua__marcas li {
+  opacity: 0.45;
+  transition: opacity 0.4s var(--curva);
+}
+
+.regua__marcas li.is-ativo {
+  color: var(--papel);
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------ telas pequenas */
+
+@media (max-width: 48rem) {
+  .topo__acoes .link {
+    display: none;
+  }
+
+  .dica {
+    bottom: 7rem;
+  }
+
+  .regua__marcas li:nth-child(2) {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------- reduzir movimento */
+
+/* Quem pediu menos movimento no sistema recebe a página parada: sem respiro
+   nas setas e sem deslizar na troca de capítulo. A opacidade fica — trocar
+   texto sem nenhuma transição pisca mais do que incomoda. */
+@media (prefers-reduced-motion: reduce) {
+  .capitulo {
+    transform: none;
+    transition: opacity 0.3s linear, visibility 0.3s;
+  }
+
+  .dica__seta {
+    animation: none;
+  }
+
+  .fundo {
+    transition: none;
+  }
+}
+
+/* -------------------------------------------------------------------- fim */
+
+/* Ato 04. Fundo sólido de propósito: é esta seção que cobre o vídeo fixo e
+   diz que o filme acabou. Sem ela, a cena continuaria correndo atrás da hora
+   de decidir — e ninguém compara preço com imagem se mexendo por baixo. */
+.fim {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  min-height: 100svh;
+  padding: clamp(5rem, 14vh, 9rem) var(--margem);
+  border-top: 1px solid rgb(244 246 251 / 0.1);
+  background: var(--tinta);
+}
+
+.fim__interno {
+  width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
+}
+
+.fim__titulo {
+  max-width: 20ch;
+  margin: 0;
+  font-size: clamp(2rem, 1.2rem + 3.2vw, 3.5rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.fim__texto {
+  max-width: 42rem;
+  margin: 1.5rem 0 0;
+  color: var(--papel-2);
+  font-size: clamp(0.95rem, 0.85rem + 0.3vw, 1.125rem);
+  line-height: 1.7;
+}
+
+/* ---------------------------------------------------- as duas formas de pagar */
+
+/* Lado a lado e na mesma medida: quem compara precisa ver as duas de uma vez.
+   Empilhadas, a de cima vira "a normal" e a de baixo "a alternativa" — e a
+   escolha deixa de ser uma escolha. */
+.formas {
+  display: grid;
+  gap: 1px;
+  margin-top: clamp(2.5rem, 6vh, 3.5rem);
+  /* O fio de 1px entre as duas é o próprio fundo aparecendo pelo `gap`: uma
+     borda só, no meio, sem dobrar espessura onde as caixas se encostam. */
+  background: rgb(244 246 251 / 0.12);
+  border: 1px solid rgb(244 246 251 / 0.12);
+}
+
+.forma {
+  padding: clamp(1.5rem, 3.5vw, 2.25rem);
+  background: var(--tinta);
+}
+
+/* A mensal recebe um fundo levemente mais claro e o fio da marca em cima —
+   é a novidade da página, e o olho precisa achá-la sem precisar ler tudo. */
+.forma--destaque {
+  background: rgb(12 15 24 / 0.95);
+  box-shadow: inset 0 2px 0 var(--marca);
+}
+
+.forma__etiqueta {
+  margin: 0;
+  color: var(--papel-2);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.forma--destaque .forma__etiqueta {
+  color: var(--marca);
+}
+
+.forma__valor {
+  margin: 1rem 0 0;
+  font-size: clamp(2rem, 1.4rem + 2vw, 2.75rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+/* O "%", o "+" e o "por" são serviço da frase, não o número: ficam menores e
+   mais apagados pra o olho pegar 30 e 70 de longe. */
+.forma__valor span {
+  font-size: 0.5em;
+  color: var(--papel-2);
+}
+
+.forma__mais {
+  margin: 0 0.15em;
+  font-size: 0.4em;
+  letter-spacing: 0;
+}
+
+.forma__texto {
+  margin: 1.25rem 0 0;
+  color: var(--papel-2);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.forma__lista {
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.forma__lista li {
+  padding: 0.65rem 0;
+  border-top: 1px solid rgb(244 246 251 / 0.1);
+  font-size: 0.875rem;
+}
+
+.fim__nota {
+  max-width: 46rem;
+  margin: 2rem 0 0;
+  color: var(--papel-2);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.fim__nota strong {
+  color: var(--papel);
+  font-weight: 500;
+}
+
+.fim__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2.5rem;
+}
+
+.fim__acoes .botao {
+  padding: 0.9rem 1.6rem;
+}
+
+.botao--claro {
+  border-color: transparent;
+  background: var(--papel);
+  color: var(--tinta);
+}
+
+.botao--claro:hover {
+  background: #fff;
+}
+
+@media (min-width: 48rem) {
+  .formas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Quatro marcas não cabem lado a lado num celular: some a do meio, como já
+   acontecia com três. */
+@media (max-width: 48rem) {
+  .regua__marcas li:nth-child(2),
+  .regua__marcas li:nth-child(3) {
+    display: none;
+  }
+}

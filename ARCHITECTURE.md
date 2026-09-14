@@ -127,8 +127,11 @@ feny/
 │   ├── whatsapp/              # integração isolada com Evolution API
 │   ├── mercadopago/           # integração isolada com Mercado Pago
 │   ├── audit/                 # AuditLog, ExternalWebhookEvent
+│   ├── leads/                 # contatos vindos do site público, antes de virar cliente
 │   ├── dashboard/             # agregações e métricas de leitura
 │   └── reports/               # relatórios (fase posterior)
+├── landing/                    # vitrine pública (`/`) — HTML, CSS e JS puros, sem build
+├── scripts/montar_frontend.sh  # junta landing + build do React num diretório só
 ├── manage.py
 ├── requirements/
 │   ├── base.txt
@@ -449,6 +452,42 @@ class ExternalWebhookEvent(BaseModel):
 
 A `UniqueConstraint` em `(provider, external_event_id)` é o que garante, a nível de banco, que o mesmo evento do Mercado Pago processado duas vezes não gera dois efeitos.
 
+### 6.11 `leads`
+
+Domínio nascido junto com o site institucional público (`/`, servido pelo mesmo SPA — ver §18). Um **lead** é quem mandou o formulário de contato do site e ainda não é cliente.
+
+```python
+class Lead(BaseModel):
+    # preenchido pelo visitante, sem login nenhum
+    name = CharField(max_length=150)
+    company = CharField(max_length=150, blank=True)
+    email = EmailField()
+    phone = CharField(max_length=11)              # só dígitos, sem +55
+    service_type = CharField(choices=ProjectType)  # mesma enum de quotations/projects
+    budget_range = CharField(choices=BudgetRange, default=UNDECIDED)
+    message = TextField()
+
+    # preenchido pela Feny depois
+    status = CharField(choices=LeadStatus, default=NEW, db_index=True)
+    internal_notes = TextField(blank=True)
+    handled_by = FK(User, null=True, on_delete=SET_NULL)
+    customer = FK(Customer, null=True, on_delete=SET_NULL)   # preenchido na conversão
+```
+
+**Por que não é um `Customer` com status:** `Customer.document` (CPF/CNPJ) é único e validado por dígito verificador — o formulário público não pede documento, e a maioria dos leads nunca vira cliente. Unificar os dois obrigaria `document` a virar opcional, justo o campo que hoje identifica cliente de forma única, e encheria a base comercial de gente que só mandou uma mensagem.
+
+**A ponte entre os dois é a conversão:** `services.converter_em_cliente(lead, actor, customer)` exige um `Customer` já cadastrado (com documento validado) e só então marca `CONVERTED`. O lead nunca cria cliente sozinho.
+
+**Endpoint público** (`POST /api/v1/public/contact/`) — o único da plataforma sem autenticação. Três travas independentes, porque nenhuma sozinha resolve:
+
+| Trava | Contra o quê |
+|---|---|
+| `ScopedRateThrottle` (`lead-public`, 5/min por IP) | volume |
+| Campo-armadilha `website`, escondido por CSS | robô que preenche todo input |
+| Janela de duplicata (mesmo e-mail + mesma mensagem em 10 min) | clique duplo / F5 no envio |
+
+A resposta é sempre a mesma (`201` + `{"detail": ...}`), tenha o lead sido criado, descartado como robô ou ignorado por duplicata — quem envia não tem o que fazer com a diferença, e um atacante não usa a resposta pra sondar se um e-mail já está na base. `authentication_classes = []` na view é necessário, não redundante com `AllowAny`: o `SessionAuthentication` global aplicaria CSRF a um visitante que por acaso esteja logado no `/admin` no mesmo navegador.
+
 ---
 
 ## 7. Máquinas de estado
@@ -512,6 +551,24 @@ stateDiagram-v2
     PAID --> [*]
 ```
 
+### 7.4 Lead (`Lead`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> NEW: formulário do site enviado
+    NEW --> CONTACTED: alguém falou com a pessoa
+    CONTACTED --> QUALIFIED: faz sentido pra Feny
+    CONTACTED --> CONVERTED: virou cliente cadastrado
+    QUALIFIED --> CONVERTED: virou cliente cadastrado
+    NEW --> DISCARDED: descartado (exige motivo)
+    CONTACTED --> DISCARDED
+    QUALIFIED --> DISCARDED
+    DISCARDED --> NEW: reaberto
+    CONVERTED --> [*]
+```
+
+Guardas em `leads/services.py`: não se pula de `NEW` direto pra `QUALIFIED` (qualificar exige ter falado com a pessoa); `CONVERTED` exige um `Customer` existente; `DISCARDED` exige motivo por escrito, que vai pra `internal_notes` — é o que explica o número no relatório de conversão depois. Lead nunca é excluído: a API não expõe `destroy`, descarte é status.
+
 ---
 
 ## 8. Regras de negócio centrais
@@ -556,14 +613,14 @@ Nenhum `float` em nenhum model, service ou serializer que toque valor monetário
 
 Base: Django `Groups` (um por `Role`) + `Permissions` padrão do Django (`add_`, `change_`, `delete_`, `view_`) por model, mais permissões customizadas para ações de domínio que não são CRUD (`can_approve_quotation`, `can_confirm_manual_payment` etc. — esta última proposital: **não existe** permissão de "confirmar pagamento manualmente" para operação normal, só via webhook; existe apenas para correção administrativa auditada).
 
-| Papel | Customers | Quotations | Projects | Finance | Documents | Audit | Settings |
-|---|---|---|---|---|---|---|---|
-| **Admin** | CRUD | CRUD + aprova | CRUD | CRUD | CRUD | Vê | CRUD |
-| **Manager/Dono** | CRUD | CRUD + aprova | CRUD | Vê | CRUD | Vê | — |
-| **Sales** | Cria/edita os próprios | Cria/edita os próprios (não aprova) | Vê os relacionados | Vê as próprias comissões | Vê os relacionados | — | — |
-| **Developer** | Vê | Vê | Edita os designados | — | Vê/anexa nos projetos | — | — |
-| **Finance** | Vê | Vê | Vê | CRUD | CRUD | Vê | — |
-| **Support** | Vê/edita limitado | Vê | Vê | — | Vê | — | — |
+| Papel | Leads | Customers | Quotations | Projects | Finance | Documents | Audit | Settings |
+|---|---|---|---|---|---|---|---|---|
+| **Admin** | Vê + atende | CRUD | CRUD + aprova | CRUD | CRUD | CRUD | Vê | CRUD |
+| **Manager/Dono** | Vê + atende | CRUD | CRUD + aprova | CRUD | Vê | CRUD | Vê | — |
+| **Sales** | Vê + atende | Cria/edita os próprios | Cria/edita os próprios (não aprova) | Vê os relacionados | Vê as próprias comissões | Vê os relacionados | — | — |
+| **Developer** | — | Vê | Vê | Edita os designados | — | Vê/anexa nos projetos | — | — |
+| **Finance** | — | Vê | Vê | Vê | CRUD | CRUD | Vê | — |
+| **Support** | Vê | Vê/edita limitado | Vê | Vê | — | Vê | — | — |
 
 Regra dura reforçada no backend (não é sugestão de UI): um `Quotation` com `sales_rep == request.user` não pode ser aprovado pelo mesmo `request.user`, mesmo que ele tecnicamente tenha a permissão `can_approve_quotation` por outro motivo — o service verifica identidade, não só permissão.
 

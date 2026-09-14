@@ -1,8 +1,9 @@
 import { Eye, EyeOff } from "lucide-react"
 import { type FormEvent, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Button, Field, Input } from "../components/ui"
 import { LoginError, useAuth } from "../lib/auth"
+import { PAINEL } from "../lib/rotas"
 
 // Conta única deste sistema — sem tela de escolher usuário, só senha
 // (a pedido). Se um dia mais de uma pessoa precisar de conta própria, é só
@@ -26,7 +27,7 @@ export function LoginPage() {
     setEnviando(true)
     try {
       const { requires2faSetup } = await login(USUARIO_UNICO, password, precisaDeOtp ? otpCode : undefined)
-      navigate(requires2faSetup ? "/2fa/configurar" : "/", { replace: true })
+      navigate(requires2faSetup ? "/2fa/configurar" : PAINEL, { replace: true })
     } catch (e) {
       if (e instanceof LoginError) {
         setErro(e.message)
@@ -99,6 +100,12 @@ export function LoginPage() {
 
         <p className="mt-4 text-center text-xs text-slate-500">
           Esqueceu a senha? A redefinição ainda não é self-service.
+        </p>
+
+        <p className="mt-6 border-t border-slate-800 pt-4 text-center text-xs text-slate-500">
+          <Link to="/" className="hover:text-slate-300">
+            ← Voltar para o site da Feny
+          </Link>
         </p>
       </form>
     </div>

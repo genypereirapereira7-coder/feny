@@ -1,6 +1,7 @@
 import { QRCodeSVG } from "qrcode.react"
 import { type FormEvent, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { PAINEL } from "../lib/rotas"
 import { Button, Field, Input, Spinner } from "../components/ui"
 import { api, tokenStorage } from "../lib/api"
 import { useAuth } from "../lib/auth"
@@ -30,7 +31,7 @@ export function TwoFactorSetupPage() {
       const resposta = await api.post<LoginResponse>("/auth/2fa/confirm/", { code: codigo })
       tokenStorage.set(resposta.data.access, resposta.data.refresh)
       await refreshUser()
-      navigate("/", { replace: true })
+      navigate(PAINEL, { replace: true })
     } catch {
       setErro("Código inválido. Confira o horário do celular e tente de novo.")
     } finally {

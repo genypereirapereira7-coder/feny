@@ -21,6 +21,13 @@ export const tokenStorage = {
 
 export const api = axios.create({ baseURL: API_BASE_URL })
 
+/** Cliente sem token e sem interceptador, pro site institucional (público).
+ * O `api` acima anexa o Bearer e, num 401, tenta renovar a sessão e dispara
+ * `feny:auth-expired` — comportamento certo dentro do painel e errado numa
+ * página que qualquer visitante abre: um erro no formulário de contato não
+ * pode derrubar a sessão de quem por acaso esteja logado na mesma aba. */
+export const apiPublica = axios.create({ baseURL: API_BASE_URL })
+
 api.interceptors.request.use((config) => {
   const access = tokenStorage.getAccess()
   if (access) {

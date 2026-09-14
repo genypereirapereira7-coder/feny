@@ -1,10 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Feny</title>
+    <meta name="theme-color" content="#020617" />
+
+    <!-- Esta página é o painel interno, servida como `painel.html` em
+         `/painel` e `/login` (ver apps/core/views.py). A vitrine, com as
+         marcas de prévia de link e o texto que o Google lê, é outra página:
+         `landing/index.html`.
+
+         `noindex` porque tela de login em resultado de busca não serve a
+         ninguém — e, aparecendo, rouba do site o lugar dele na busca pelo
+         nome da empresa. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Feny · Painel</title>
   </head>
   <body>
     <div id="root"></div>

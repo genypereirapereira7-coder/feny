@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { PAINEL } from "../../lib/rotas"
 import { DocumentsPanel } from "../../components/DocumentsPanel"
 import { ProjectTimeline } from "../../components/ProjectTimeline"
 import { Button, Card, EmptyState, ErrorState, Spinner, StatusBadge, Table, Td, Th, Tr } from "../../components/ui"
@@ -62,7 +63,7 @@ export function ProjectDetailPage() {
     <div className="mx-auto max-w-5xl">
       <button
         type="button"
-        onClick={() => navigate("/projetos")}
+        onClick={() => navigate(`${PAINEL}/projetos`)}
         className="mb-4 flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200"
       >
         <ArrowLeft size={14} /> Projetos

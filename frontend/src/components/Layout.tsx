@@ -4,11 +4,13 @@ import {
   ChevronDown,
   FileStack,
   FileText,
+  Globe,
   History,
   LayoutDashboard,
   LifeBuoy,
   LineChart,
   LogOut,
+  Magnet,
   Percent,
   Receipt,
   Repeat,
@@ -17,8 +19,9 @@ import {
   UserCog,
   Users,
 } from "lucide-react"
-import { useState } from "react"
-import { NavLink, Outlet, useLocation } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom"
+import { PAINEL } from "../lib/rotas"
 import { useAuth } from "../lib/auth"
 import type { Role } from "../lib/types"
 
@@ -32,21 +35,22 @@ const NOME_PAPEL: Record<Role, string> = {
 }
 
 const TITULO_ROTA: Record<string, string> = {
-  "/": "Dashboard",
-  "/clientes": "Clientes",
-  "/orcamentos": "Orçamentos",
-  "/projetos": "Projetos",
-  "/financeiro/cobrancas": "Contas a receber",
-  "/financeiro/receitas": "Receitas",
-  "/financeiro/fluxo-de-caixa": "Fluxo de caixa",
-  "/financeiro/despesas": "Despesas",
-  "/financeiro/assinaturas": "Recorrências",
-  "/financeiro/comissoes": "Comissões",
-  "/documentos": "Documentos",
-  "/suporte": "Suporte",
-  "/equipe": "Equipe",
-  "/configuracoes": "Configurações",
-  "/auditoria": "Auditoria",
+  [PAINEL]: "Dashboard",
+  [`${PAINEL}/clientes`]: "Clientes",
+  [`${PAINEL}/leads`]: "Leads do site",
+  [`${PAINEL}/orcamentos`]: "Orçamentos",
+  [`${PAINEL}/projetos`]: "Projetos",
+  [`${PAINEL}/financeiro/cobrancas`]: "Contas a receber",
+  [`${PAINEL}/financeiro/receitas`]: "Receitas",
+  [`${PAINEL}/financeiro/fluxo-de-caixa`]: "Fluxo de caixa",
+  [`${PAINEL}/financeiro/despesas`]: "Despesas",
+  [`${PAINEL}/financeiro/assinaturas`]: "Recorrências",
+  [`${PAINEL}/financeiro/comissoes`]: "Comissões",
+  [`${PAINEL}/documentos`]: "Documentos",
+  [`${PAINEL}/suporte`]: "Suporte",
+  [`${PAINEL}/equipe`]: "Equipe",
+  [`${PAINEL}/configuracoes`]: "Configurações",
+  [`${PAINEL}/auditoria`]: "Auditoria",
 }
 
 interface ItemNav {
@@ -65,25 +69,28 @@ interface GrupoNav {
 // Só entram aqui telas que existem de verdade — nada de link morto (spec de
 // frontend §93).
 const GRUPOS_NAV: GrupoNav[] = [
-  { label: "", itens: [{ to: "/", label: "Dashboard", icon: LayoutDashboard }] },
+  { label: "", itens: [{ to: PAINEL, label: "Dashboard", icon: LayoutDashboard }] },
   {
     label: "Comercial",
     itens: [
-      { to: "/clientes", label: "Clientes", icon: Users },
-      { to: "/orcamentos", label: "Orçamentos", icon: FileText },
+      // Lead é a porta de entrada do funil: quem chegou pelo site e ainda não
+      // é cliente. Fica antes de Clientes por isso.
+      { to: `${PAINEL}/leads`, label: "Leads do site", icon: Magnet, roles: ["ADMIN", "MANAGER", "SALES", "SUPPORT"] },
+      { to: `${PAINEL}/clientes`, label: "Clientes", icon: Users },
+      { to: `${PAINEL}/orcamentos`, label: "Orçamentos", icon: FileText },
     ],
   },
-  { label: "Projetos", itens: [{ to: "/projetos", label: "Projetos", icon: Briefcase }] },
+  { label: "Projetos", itens: [{ to: `${PAINEL}/projetos`, label: "Projetos", icon: Briefcase }] },
   {
     label: "Financeiro",
     itens: [
-      { to: "/financeiro/cobrancas", label: "Contas a receber", icon: Receipt, roles: ["ADMIN", "MANAGER", "FINANCE"] },
-      { to: "/financeiro/receitas", label: "Receitas", icon: TrendingUp, roles: ["ADMIN", "MANAGER", "FINANCE"] },
-      { to: "/financeiro/fluxo-de-caixa", label: "Fluxo de caixa", icon: LineChart, roles: ["ADMIN", "MANAGER", "FINANCE"] },
-      { to: "/financeiro/despesas", label: "Despesas", icon: Banknote, roles: ["ADMIN", "MANAGER", "FINANCE"] },
-      { to: "/financeiro/assinaturas", label: "Recorrências", icon: Repeat, roles: ["ADMIN", "MANAGER", "FINANCE"] },
+      { to: `${PAINEL}/financeiro/cobrancas`, label: "Contas a receber", icon: Receipt, roles: ["ADMIN", "MANAGER", "FINANCE"] },
+      { to: `${PAINEL}/financeiro/receitas`, label: "Receitas", icon: TrendingUp, roles: ["ADMIN", "MANAGER", "FINANCE"] },
+      { to: `${PAINEL}/financeiro/fluxo-de-caixa`, label: "Fluxo de caixa", icon: LineChart, roles: ["ADMIN", "MANAGER", "FINANCE"] },
+      { to: `${PAINEL}/financeiro/despesas`, label: "Despesas", icon: Banknote, roles: ["ADMIN", "MANAGER", "FINANCE"] },
+      { to: `${PAINEL}/financeiro/assinaturas`, label: "Recorrências", icon: Repeat, roles: ["ADMIN", "MANAGER", "FINANCE"] },
       {
-        to: "/financeiro/comissoes",
+        to: `${PAINEL}/financeiro/comissoes`,
         label: "Comissões",
         icon: Percent,
         roles: ["ADMIN", "MANAGER", "FINANCE", "SALES"],
@@ -93,11 +100,11 @@ const GRUPOS_NAV: GrupoNav[] = [
   {
     label: "Sistema",
     itens: [
-      { to: "/documentos", label: "Documentos", icon: FileStack },
-      { to: "/suporte", label: "Suporte", icon: LifeBuoy, roles: ["ADMIN", "MANAGER", "SUPPORT"] },
-      { to: "/equipe", label: "Equipe", icon: UserCog, roles: ["ADMIN", "MANAGER"] },
-      { to: "/auditoria", label: "Auditoria", icon: History, roles: ["ADMIN", "MANAGER"] },
-      { to: "/configuracoes", label: "Configurações", icon: Settings, roles: ["ADMIN"] },
+      { to: `${PAINEL}/documentos`, label: "Documentos", icon: FileStack },
+      { to: `${PAINEL}/suporte`, label: "Suporte", icon: LifeBuoy, roles: ["ADMIN", "MANAGER", "SUPPORT"] },
+      { to: `${PAINEL}/equipe`, label: "Equipe", icon: UserCog, roles: ["ADMIN", "MANAGER"] },
+      { to: `${PAINEL}/auditoria`, label: "Auditoria", icon: History, roles: ["ADMIN", "MANAGER"] },
+      { to: `${PAINEL}/configuracoes`, label: "Configurações", icon: Settings, roles: ["ADMIN"] },
     ],
   },
 ]
@@ -114,15 +121,22 @@ export function Layout() {
 
   const tituloPagina = TITULO_ROTA[location.pathname] ?? "Feny"
 
+  // Aba do navegador acompanha a tela. O `index.html` nasce com o título do
+  // site público (é o que buscador e prévia de link leem), então sem isto
+  // cada aba do painel se chamaria "Feny — sistemas, sites e automações…".
+  useEffect(() => {
+    document.title = `Feny · ${tituloPagina}`
+  }, [tituloPagina])
+
   return (
     <div className="flex min-h-screen bg-slate-950">
       <aside className="flex w-60 shrink-0 flex-col border-r border-slate-800 bg-slate-900/40 px-3 py-4">
-        <div className="mb-6 flex items-center gap-2 px-2">
+        <Link to={PAINEL} className="mb-6 flex items-center gap-2 px-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600 text-sm font-bold text-white">
             F
           </div>
           <span className="text-base font-semibold text-slate-100">Feny</span>
-        </div>
+        </Link>
 
         <nav className="flex-1 space-y-4">
           {grupos.map((grupo) => (
@@ -139,7 +153,7 @@ export function Layout() {
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      end={item.to === "/"}
+                      end={item.to === PAINEL}
                       className={({ isActive }) =>
                         `flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
                           isActive ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"
@@ -188,6 +202,13 @@ export function Layout() {
                     <p className="text-xs text-slate-500">{user?.email || "—"}</p>
                     <p className="mt-0.5 text-xs text-slate-500">{user && NOME_PAPEL[user.role]}</p>
                   </div>
+                  <Link
+                    to="/"
+                    onClick={() => setMenuAberto(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+                  >
+                    <Globe size={15} /> Ver o site
+                  </Link>
                   <button
                     type="button"
                     onClick={logout}

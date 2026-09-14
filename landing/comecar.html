@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05060a" />
+
+    <title>Começar um projeto — Feny</title>
+    <meta
+      name="description"
+      content="Conte o que você precisa e receba um orçamento por escrito: escopo, prazo e preço. 30% pra começar, 70% só na entrega aceita."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Feny" />
+    <meta property="og:title" content="Começar um projeto — Feny" />
+    <meta
+      property="og:description"
+      content="Conte o que você precisa e receba um orçamento por escrito: escopo, prazo e preço."
+    />
+    <meta property="og:image" content="/midia/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/midia/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- `style.css` primeiro: é dele que vêm as cores, a fonte e o botão. Esta
+         página só acrescenta o que é dela. -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="comecar.css" />
+  </head>
+
+  <body class="pagina">
+    <a class="pular" href="#formulario">Ir direto para o formulário</a>
+
+    <header class="topo topo--solido">
+      <a class="marca" href="/" aria-label="Feny — início">
+        <span class="marca__ponto" aria-hidden="true"></span>
+        Feny
+      </a>
+      <nav class="topo__acoes">
+        <a class="link" href="/">← Voltar</a>
+        <a
+          class="botao"
+          href="https://wa.me/5569992264398?text=Oi!%20Vim%20pelo%20site%20da%20Feny%20e%20queria%20falar%20sobre%20um%20projeto."
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Chamar no WhatsApp
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- ------------------------------------------------- abertura + form -->
+      <section class="abertura">
+        <div class="abertura__texto">
+          <p class="capitulo__etiqueta">Começar um projeto</p>
+          <h1 class="abertura__titulo">Conta o que você precisa resolver</h1>
+          <p class="abertura__descricao">
+            Não precisa chegar com o projeto pronto na cabeça. Descreva o problema do jeito que ele aparece no seu dia
+            — o resto a gente pergunta. Conversa e proposta não custam nada.
+          </p>
+
+          <ol class="depois">
+            <li><strong>Agora:</strong> você preenche e a gente lê.</li>
+            <li><strong>Em até 1 dia útil:</strong> respondemos no WhatsApp ou no e-mail que você deixou.</li>
+            <li><strong>Se fizer sentido:</strong> uma conversa pra entender o processo por dentro.</li>
+            <li><strong>Só então:</strong> o orçamento, por escrito, com escopo, prazo e preço.</li>
+          </ol>
+
+          <p class="ou">
+            Prefere falar agora?
+            <a
+              href="https://wa.me/5569992264398?text=Oi!%20Vim%20pelo%20site%20da%20Feny%20e%20queria%20falar%20sobre%20um%20projeto."
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Chamar no WhatsApp · (69) 99226-4398
+            </a>
+          </p>
+        </div>
+
+        <div class="formulario" id="formulario">
+          <form id="form-contato" novalidate>
+            <!-- Armadilha de robô: escondida do olho e do leitor de tela, mas
+                 preenchível por script que completa todo input que encontra. O
+                 backend descarta quem cair nela. Nada de `display:none` —
+                 parte dos robôs ignora campo assim. -->
+            <div class="armadilha" aria-hidden="true">
+              <label for="website">Não preencha este campo</label>
+              <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="campos">
+              <p class="campo">
+                <label for="name">Seu nome <span aria-hidden="true">*</span></label>
+                <input id="name" name="name" type="text" autocomplete="name" placeholder="Maria Souza" required />
+                <span class="erro" id="erro-name"></span>
+              </p>
+              <p class="campo">
+                <label for="company">Empresa</label>
+                <input id="company" name="company" type="text" autocomplete="organization" placeholder="Opcional" />
+                <span class="erro" id="erro-company"></span>
+              </p>
+              <p class="campo">
+                <label for="email">E-mail <span aria-hidden="true">*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" placeholder="voce@suaempresa.com.br" required />
+                <span class="erro" id="erro-email"></span>
+              </p>
+              <p class="campo">
+                <label for="phone">WhatsApp <span aria-hidden="true">*</span></label>
+                <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(00) 00000-0000" required />
+                <span class="erro" id="erro-phone"></span>
+              </p>
+              <p class="campo">
+                <label for="service_type">O que você precisa <span aria-hidden="true">*</span></label>
+                <select id="service_type" name="service_type" required>
+                  <option value="">Selecione…</option>
+                  <option value="SYSTEM">Sistema sob medida</option>
+                  <option value="AUTOMATION">Automação</option>
+                  <option value="WEBSITE">Site ou landing page</option>
+                  <option value="PWA">PWA</option>
+                  <option value="APP">Aplicativo</option>
+                  <option value="SAAS">SaaS</option>
+                  <option value="OTHER">Integração / outro</option>
+                </select>
+                <span class="erro" id="erro-service_type"></span>
+              </p>
+              <p class="campo">
+                <label for="budget_range">Faixa de investimento</label>
+                <select id="budget_range" name="budget_range">
+                  <option value="UNDECIDED">Ainda não sei</option>
+                  <option value="UNDER_5K">Até R$ 5 mil</option>
+                  <option value="FROM_5K_TO_15K">R$ 5 mil a R$ 15 mil</option>
+                  <option value="FROM_15K_TO_40K">R$ 15 mil a R$ 40 mil</option>
+                  <option value="ABOVE_40K">Acima de R$ 40 mil</option>
+                </select>
+                <span class="erro" id="erro-budget_range"></span>
+              </p>
+              <p class="campo campo--largo">
+                <label for="message">O problema, em duas linhas <span aria-hidden="true">*</span></label>
+                <textarea id="message" name="message" rows="5" placeholder="Hoje eu controlo tudo numa planilha e sempre esquece alguém de cobrar…" required></textarea>
+                <span class="erro" id="erro-message"></span>
+              </p>
+            </div>
+
+            <!-- `aria-live` pra quem usa leitor de tela ouvir o resultado do
+                 envio: sem isso a mensagem aparece na tela e não é anunciada,
+                 e a pessoa fica sem saber se foi. -->
+            <p class="aviso" id="aviso" role="status" aria-live="polite"></p>
+
+            <button class="botao botao--claro botao--cheio" id="enviar" type="submit">Enviar e receber retorno</button>
+            <p class="legal">Seus dados servem só pra este contato. Nada de lista de e-mail.</p>
+          </form>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------- o que fazemos -->
+      <section class="secao" id="servicos">
+        <header class="secao__cabecalho" data-revela>
+          <p class="etiqueta"><span class="tracinho" aria-hidden="true"></span>O que fazemos</p>
+          <h2 class="secao__titulo">Sete frentes, um jeito de trabalhar</h2>
+          <p class="secao__texto">
+            Não importa se o seu problema é uma tela, uma rotina que ninguém aguenta mais fazer na mão ou um produto
+            inteiro — o caminho é o mesmo: entender, orçar por escrito e entregar funcionando.
+          </p>
+        </header>
+
+        <div class="grade grade--2">
+          <article class="bloco" data-revela>
+            <p class="bloco__numero">01</p>
+            <h3 class="bloco__titulo">Sistemas sob medida</h3>
+            <p class="bloco__texto">O sistema desenhado em cima do processo que a sua empresa já tem — não o contrário. Estoque, vendas, parcelas, financeiro, relatórios.</p>
+            <p class="bloco__itens">Gestão de estoque e vendas · Controle de parcelas · Relatórios do dono</p>
+          </article>
+          <article class="bloco" data-revela>
+            <p class="bloco__numero">02</p>
+            <h3 class="bloco__titulo">Automações</h3>
+            <p class="bloco__texto">O que hoje depende de alguém lembrar vira rotina que roda sozinha: cobrança, aviso de vencimento, relatório que chega pronto.</p>
+            <p class="bloco__itens">Cobrança automática · Avisos por WhatsApp · Rotinas agendadas</p>
+          </article>
+          <article class="bloco" data-revela>
+            <p class="bloco__numero">03</p>
+            <h3 class="bloco__titulo">Sites e landing pages</h3>
+            <p class="bloco__texto">Site que carrega rápido, aparece no Google e converte visita em contato — com o formulário ligado no seu sistema, não num e-mail perdido.</p>
+            <p class="bloco__itens">Site institucional · Landing de campanha · Vitrine de produtos</p>
+          </article>
+          <article class="bloco" data-revela>
+            <p class="bloco__numero">04</p>
+            <h3 class="bloco__titulo">PWAs</h3>
+            <p class="bloco__texto">Instala na tela do celular como aplicativo, funciona com internet ruim e atualiza sozinho — sem depender de aprovação de loja.</p>
+            <p class="bloco__itens">App de balcão · Painel do dono · Pedido na mesa</p>
+          </article>
+          <article class="bloco" data-revela>
+            <p class="bloco__numero">05</p>
+            <h3 class="bloco__titulo">Aplicativos</h3>
+            <p class="bloco__texto">Quando o trabalho acontece com o aparelho na mão: leitura de código de barras, foto, GPS, impressora térmica, uso offline.</p>
+            <p class="bloco__itens">App de equipe em campo · Leitor de código · Impressão térmica</p>
+          </article>
+          <article class="bloco" data-revela>
+            <p class="bloco__numero">06</p>
+            <h3 class="bloco__titulo">SaaS</h3>
+            <p class="bloco__texto">Seu produto vendido por assinatura: várias empresas na mesma plataforma, cobrança recorrente e painel por cliente.</p>
+            <p class="bloco__itens">Multiempresa · Assinatura recorrente · Painel por cliente</p>
+          </article>
+          <article class="bloco" data-revela>
+            <p class="bloco__numero">07</p>
+            <h3 class="bloco__titulo">Integrações</h3>
+            <p class="bloco__texto">Dois sistemas que não se falam passando a se falar: pagamento, WhatsApp, emissor fiscal, planilha que virou API.</p>
+            <p class="bloco__itens">Mercado Pago · WhatsApp / Evolution API · ERP e planilhas</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------ como funciona -->
+      <section class="secao secao--faixa" id="como-funciona">
+        <header class="secao__cabecalho" data-revela>
+          <p class="etiqueta"><span class="tracinho" aria-hidden="true"></span>Como funciona</p>
+          <h2 class="secao__titulo">Do primeiro oi até o sistema no ar</h2>
+          <p class="secao__texto">
+            Seis etapas, nenhuma surpresa. Você sabe o que vem antes de pagar cada parte — e sabe exatamente o que
+            acontece depois da entrega.
+          </p>
+        </header>
+
+        <ol class="etapas">
+          <li class="etapa" data-revela>
+            <span class="etapa__numero">01</span>
+            <div>
+              <h3 class="etapa__titulo">Conversa</h3>
+              <p class="etapa__texto">Você conta o problema, a gente pergunta até entender o processo de verdade. Sem custo e sem compromisso nenhum.</p>
+            </div>
+          </li>
+          <li class="etapa" data-revela>
+            <span class="etapa__numero">02</span>
+            <div>
+              <h3 class="etapa__titulo">Orçamento por escrito</h3>
+              <p class="etapa__texto">Escopo, prazo e preço num documento só. O que está dentro e o que está fora fica claro antes de qualquer pagamento.</p>
+            </div>
+          </li>
+          <li class="etapa" data-revela>
+            <span class="etapa__numero">03</span>
+            <div>
+              <h3 class="etapa__titulo">Sinal de 30%</h3>
+              <p class="etapa__texto">Aprovou, entra 30% e o desenvolvimento começa. O restante só é cobrado no fim.</p>
+            </div>
+          </li>
+          <li class="etapa" data-revela>
+            <span class="etapa__numero">04</span>
+            <div>
+              <h3 class="etapa__titulo">Desenvolvimento acompanhado</h3>
+              <p class="etapa__texto">Você vê o projeto andando por etapas — não some por dois meses pra reaparecer com algo que não era o combinado.</p>
+            </div>
+          </li>
+          <li class="etapa" data-revela>
+            <span class="etapa__numero">05</span>
+            <div>
+              <h3 class="etapa__titulo">Entrega, aceite e saldo</h3>
+              <p class="etapa__texto">No ar, testado e aceito por você. Aí sim entram os 70% restantes.</p>
+            </div>
+          </li>
+          <li class="etapa" data-revela>
+            <span class="etapa__numero">06</span>
+            <div>
+              <h3 class="etapa__titulo">Depois do lançamento</h3>
+              <p class="etapa__texto">Hospedagem, manutenção e suporte seguem na mensalidade. Mudança de escopo depois é orçada à parte, nunca cobrada por surpresa.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <!-- -------------------------------------------------------- investimento -->
+      <section class="secao" id="investimento">
+        <header class="secao__cabecalho" data-revela>
+          <p class="etiqueta"><span class="tracinho" aria-hidden="true"></span>Investimento</p>
+          <h2 class="secao__titulo">Preço sai por escrito, nunca por chute</h2>
+          <p class="secao__texto">
+            Não há tabela fixa aqui de propósito: dois sistemas com o mesmo nome resolvem problemas de tamanhos
+            diferentes. O que é fixo é o jeito de cobrar.
+          </p>
+        </header>
+
+        <div class="grade grade--3">
+          <article class="bloco" data-revela>
+            <h3 class="bloco__titulo">30% pra começar</h3>
+            <p class="bloco__texto">O sinal entra depois do orçamento aprovado e libera o desenvolvimento. Antes disso, conversa e proposta não custam nada.</p>
+          </article>
+          <article class="bloco" data-revela>
+            <h3 class="bloco__titulo">70% na entrega</h3>
+            <p class="bloco__texto">O saldo só é cobrado depois que está no ar e você aceitou. Não existe cobrança de coisa que você ainda não viu funcionando.</p>
+          </article>
+          <article class="bloco" data-revela>
+            <h3 class="bloco__titulo">Mensalidade de quem fica</h3>
+            <p class="bloco__texto">Hospedagem, manutenção e suporte continuam numa mensalidade combinada antes — e mudança de escopo depois é sempre orçada à parte.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------------ projetos -->
+      <section class="secao secao--faixa" id="projetos">
+        <header class="secao__cabecalho" data-revela>
+          <p class="etiqueta"><span class="tracinho" aria-hidden="true"></span>Projetos</p>
+          <h2 class="secao__titulo">O que já está rodando</h2>
+          <p class="secao__texto">
+            Cada um nasceu de um problema específico de um negócio específico — e é por isso que nenhum deles se
+            parece com o outro.
+          </p>
+        </header>
+
+        <div class="grade grade--2">
+          <article class="bloco" data-revela>
+            <div class="bloco__topo">
+              <h3 class="bloco__titulo bloco__titulo--grande">Shalon</h3>
+              <p class="bloco__segmento">Sorveteria</p>
+            </div>
+            <p class="bloco__texto">Sistema de pedidos que vive no celular: um app pro balcão e outro pro dono, com a comanda saindo na impressora térmica ligada ao próprio aparelho.</p>
+            <ul class="lista">
+              <li>Dois PWAs, nenhuma tela de PC</li>
+              <li>Comanda na térmica pelo RawBT</li>
+              <li>Total do dia no celular do dono na hora</li>
+            </ul>
+            <p class="bloco__itens">FastAPI · PWA · WebSocket</p>
+          </article>
+
+          <article class="bloco" data-revela>
+            <div class="bloco__topo">
+              <h3 class="bloco__titulo bloco__titulo--grande">King Street</h3>
+              <p class="bloco__segmento">Catálogo digital</p>
+            </div>
+            <p class="bloco__texto">Loja online com pedido fechando direto no WhatsApp: catálogo com variação e estoque, carrinho, cupom e avaliação de quem comprou de verdade.</p>
+            <ul class="lista">
+              <li>Pedido direto no WhatsApp</li>
+              <li>Cupom e controle de estoque</li>
+              <li>Painel administrativo PWA</li>
+            </ul>
+            <p class="bloco__itens">Django · PWA · Mobile first</p>
+          </article>
+
+          <article class="bloco" data-revela>
+            <div class="bloco__topo">
+              <h3 class="bloco__titulo bloco__titulo--grande">Carlos Moto</h3>
+              <p class="bloco__segmento">Revenda de motos</p>
+            </div>
+            <p class="bloco__texto">Gestão da loja de ponta a ponta: cadastro de motos, clientes, vendas parceladas e o financeiro que sai dali sem planilha no meio.</p>
+            <ul class="lista">
+              <li>Estoque de motos</li>
+              <li>Vendas e parcelas</li>
+              <li>Financeiro e relatórios</li>
+            </ul>
+            <p class="bloco__itens">FastAPI · PWA · WebSocket</p>
+          </article>
+
+          <article class="bloco" data-revela>
+            <div class="bloco__topo">
+              <h3 class="bloco__titulo bloco__titulo--grande">Prime Veículos</h3>
+              <p class="bloco__segmento">Compra e venda de carros</p>
+            </div>
+            <p class="bloco__texto">Vitrine da loja na internet, feita pra ser achada: estoque com fotos, SEO trabalhado página a página e contato a um toque.</p>
+            <ul class="lista">
+              <li>Vitrine de estoque</li>
+              <li>SEO e compartilhamento</li>
+              <li>Rápido no celular</li>
+            </ul>
+            <p class="bloco__itens">Site · SEO · Performance</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------------- dúvidas -->
+      <section class="secao" id="duvidas">
+        <header class="secao__cabecalho" data-revela>
+          <p class="etiqueta"><span class="tracinho" aria-hidden="true"></span>Dúvidas</p>
+          <h2 class="secao__titulo">O que perguntam antes de fechar</h2>
+          <p class="secao__texto">Se a sua não está aqui, pergunte no formulário — respondemos direto, sem enrolação comercial.</p>
+        </header>
+
+        <!-- `<details>` nativo: teclado, leitor de tela e a busca do próprio
+             navegador (Ctrl+F acha texto dentro de resposta fechada) vêm de
+             graça, e abre mesmo se o JavaScript falhar. A animação de altura
+             é feita por cima disso, no script. -->
+        <div class="duvidas">
+          <details class="duvida">
+            <summary><span class="duvida__numero">01</span>Quanto custa um projeto?<span class="duvida__cruz" aria-hidden="true"></span></summary>
+            <div class="duvida__corpo"><p>Depende do escopo — e por isso o preço nunca sai antes da conversa. Cada projeto recebe um orçamento próprio, por escrito, com o que está incluído, o prazo e o valor. Sem esse levantamento, qualquer número seria chute.</p></div>
+          </details>
+          <details class="duvida">
+            <summary><span class="duvida__numero">02</span>Como funciona o pagamento?<span class="duvida__cruz" aria-hidden="true"></span></summary>
+            <div class="duvida__corpo"><p>30% de sinal pra começar e 70% na entrega, depois do seu aceite. Serviços contínuos (hospedagem, manutenção, suporte) ficam numa mensalidade combinada antes. Mudança de escopo no meio do caminho é orçada à parte — você aprova antes de virar trabalho.</p></div>
+          </details>
+          <details class="duvida">
+            <summary><span class="duvida__numero">03</span>Quanto tempo demora?<span class="duvida__cruz" aria-hidden="true"></span></summary>
+            <div class="duvida__corpo"><p>Um site institucional é questão de semanas; um sistema completo, de meses. O prazo fecha junto com o escopo no orçamento, e o andamento é acompanhado por etapas — você não fica no escuro até a entrega.</p></div>
+          </details>
+          <details class="duvida">
+            <summary><span class="duvida__numero">04</span>O sistema é meu no fim?<span class="duvida__cruz" aria-hidden="true"></span></summary>
+            <div class="duvida__corpo"><p>Sim. O software é desenvolvido pra sua empresa e é seu. Não existe aluguel de licença por usuário nem trava pra te segurar: a mensalidade, quando existe, é de hospedagem, manutenção e suporte — serviço, não permissão de uso.</p></div>
+          </details>
+          <details class="duvida">
+            <summary><span class="duvida__numero">05</span>E depois que está no ar?<span class="duvida__cruz" aria-hidden="true"></span></summary>
+            <div class="duvida__corpo"><p>A entrega não é o fim. Correção, ajuste, dúvida da equipe e evolução continuam com a gente. É exatamente o que a mensalidade cobre, e é por isso que ela existe.</p></div>
+          </details>
+          <details class="duvida">
+            <summary><span class="duvida__numero">06</span>Vocês atendem de outra cidade?<span class="duvida__cruz" aria-hidden="true"></span></summary>
+            <div class="duvida__corpo"><p>Atendemos. O trabalho é remoto de ponta a ponta — conversa por chamada, andamento por WhatsApp e entrega pela internet. A distância não muda nada no resultado.</p></div>
+          </details>
+        </div>
+
+        <div class="chamada" data-revela>
+          <div>
+            <p class="chamada__titulo">Pronto pra contar o seu?</p>
+            <p class="chamada__texto">Leva dois minutos. A gente responde com as perguntas certas antes de falar de preço.</p>
+          </div>
+          <a class="botao botao--claro" href="#formulario">Preencher o formulário</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="rodape">
+      <div class="rodape__interno">
+        <a class="marca" href="/" aria-label="Feny — início">
+          <span class="marca__ponto" aria-hidden="true"></span>
+          Feny
+        </a>
+        <p class="rodape__texto">
+          Software house de desenvolvimento sob medida. Atendimento remoto, do Brasil inteiro.
+        </p>
+      </div>
+      <div class="rodape__fim">
+        <p>© <span id="ano"></span> Feny. Todos os direitos reservados.</p>
+        <a href="/painel">Acesso ao sistema interno</a>
+      </div>
+    </footer>
+
+    <script src="comecar.js"></script>
+  </body>
+</html>

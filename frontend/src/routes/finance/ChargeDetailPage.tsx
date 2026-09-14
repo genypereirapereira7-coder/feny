@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { PAINEL } from "../../lib/rotas"
 import { ChargeIssuedModal } from "../../components/ChargeIssuedModal"
 import { ConfirmPaymentModal } from "../../components/ConfirmPaymentModal"
 import { Button, Card, EmptyState, ErrorState, Spinner, StatusBadge, Table, Td, Th, Tr } from "../../components/ui"
@@ -74,7 +75,7 @@ export function ChargeDetailPage() {
     <div className="mx-auto max-w-3xl">
       <button
         type="button"
-        onClick={() => navigate("/financeiro/cobrancas")}
+        onClick={() => navigate(`${PAINEL}/financeiro/cobrancas`)}
         className="mb-4 flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200"
       >
         <ArrowLeft size={14} /> Contas a receber

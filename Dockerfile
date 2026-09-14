@@ -33,8 +33,15 @@ COPY requirements/ requirements/
 RUN pip install --no-cache-dir -r requirements/production.txt
 
 COPY . .
-COPY --from=frontend-build /frontend/dist ./frontend_dist
-RUN chmod +x docker-entrypoint.sh
+
+# Duas páginas, um diretório servido: a landing estática fica na raiz do
+# domínio e o build do React vira `painel.html`. Quem monta é o mesmo script
+# usado localmente, pra o deploy não ter um jeito próprio de arrumar arquivo
+# que ninguém testa até quebrar em produção.
+COPY --from=frontend-build /frontend/dist ./_react_dist
+RUN chmod +x docker-entrypoint.sh scripts/montar_frontend.sh \
+    && ./scripts/montar_frontend.sh _react_dist \
+    && rm -rf _react_dist
 
 EXPOSE 8000
 

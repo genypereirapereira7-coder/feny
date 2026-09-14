@@ -288,3 +288,42 @@ export interface DocumentFile {
   uploaded_by: string
   created_at: string
 }
+
+// Espelha apps/leads/models.py — contato que chegou pelo site público e
+// ainda não é cliente (não tem CPF/CNPJ, e a maioria nunca vai ter).
+export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "CONVERTED" | "DISCARDED"
+export type BudgetRange = "UNDECIDED" | "UNDER_5K" | "FROM_5K_TO_15K" | "FROM_15K_TO_40K" | "ABOVE_40K"
+
+export interface Lead {
+  id: string
+  name: string
+  company: string
+  email: string
+  phone: string
+  service_type: ProjectType
+  service_type_display: string
+  budget_range: BudgetRange
+  budget_range_display: string
+  message: string
+  status: LeadStatus
+  internal_notes: string
+  handled_by: string | null
+  handled_by_name: string
+  customer: string | null
+  customer_name: string
+  created_at: string
+  updated_at: string
+}
+
+/** O que o formulário do site manda em `POST /public/contact/`. `website` é a
+ * armadilha de robô — sempre vazia quando é gente de verdade preenchendo. */
+export interface ContatoPublico {
+  name: string
+  company: string
+  email: string
+  phone: string
+  service_type: ProjectType
+  budget_range: BudgetRange
+  message: string
+  website: string
+}

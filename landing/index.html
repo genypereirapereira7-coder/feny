@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05060a" />
+
+    <title>Feny — sistemas, sites e automações sob medida</title>
+    <meta
+      name="description"
+      content="Software house de desenvolvimento sob medida: sistemas, automações, sites, PWAs, aplicativos, SaaS e integrações. Orçamento por escrito, 30% pra começar e 70% na entrega."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Feny" />
+    <meta property="og:title" content="Feny — sistemas, sites e automações sob medida" />
+    <meta
+      property="og:description"
+      content="Sistemas, automações, sites, PWAs, aplicativos e SaaS feitos pro jeito que a sua empresa já trabalha."
+    />
+    <!-- Caminho relativo de propósito: o Django o transforma em endereço
+         absoluto na hora de servir (apps/core/views.py). WhatsApp e Facebook
+         descartam caminho relativo, e o domínio muda entre localhost, Railway
+         e domínio próprio. -->
+    <meta property="og:image" content="/midia/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/midia/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- O vídeo é fundo, não conteúdo: `aria-hidden` pra leitor de tela não
+         anunciar um vídeo sem fala nem legenda, e `tabindex="-1"` pra ele não
+         entrar na ordem do Tab. Quem navega por teclado controla a linha do
+         tempo pelas setas (ver script.js).
+
+         `preload="auto"` é obrigatório aqui, não otimização: arrastar a linha
+         do tempo exige que os quadros já estejam no navegador. Com `metadata`
+         cada movimento do mouse viraria uma requisição de trecho e o efeito
+         engasgaria. -->
+    <video
+      id="fundo"
+      class="fundo"
+      src="video.mp4"
+      muted
+      playsinline
+      preload="auto"
+      aria-hidden="true"
+      tabindex="-1"
+    ></video>
+
+    <!-- Duas camadas por cima do vídeo: o escurecimento (pro texto ter
+         contraste em qualquer quadro) e o grão (tira o aspecto de plástico do
+         degradê). Ambas puramente decorativas. -->
+    <div class="veu" aria-hidden="true"></div>
+    <div class="grao" aria-hidden="true"></div>
+
+    <header class="topo">
+      <a class="marca" href="/" aria-label="Feny — início">
+        <span class="marca__ponto" aria-hidden="true"></span>
+        Feny
+      </a>
+      <nav class="topo__acoes">
+        <a class="botao" href="/comecar">Começar um projeto</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- A seção é alta (320vh) e o que se vê dela é sempre a mesma tela
+           grudada no topo. Essa altura extra não é espaço vazio: é a régua da
+           rolagem — é ela que dá curso pro vídeo andar enquanto a página
+           desce, sem precisar de biblioteca de scroll nenhuma. -->
+      <section class="filme" id="filme">
+        <div class="filme__tela">
+      <!-- Os três capítulos existem no HTML ao mesmo tempo, e não são trocados
+           por JavaScript montando texto: assim o buscador lê os três e quem usa
+           leitor de tela recebe o conteúdo inteiro, na ordem, sem depender de
+           mover o mouse — que é o gesto que a tela de toque nem tem. -->
+      <div class="capitulos" id="capitulos">
+        <article class="capitulo is-ativo" data-capitulo="0">
+          <p class="capitulo__etiqueta">01 — A conversa</p>
+          <h1 class="capitulo__titulo">Você conta o problema.<br />A gente pergunta o resto.</h1>
+          <p class="capitulo__texto">
+            Não precisa chegar com o projeto pronto na cabeça. Descreva do jeito que ele aparece no seu dia — a gente
+            pergunta até entender o processo de verdade. Sem custo e sem compromisso.
+          </p>
+        </article>
+
+        <article class="capitulo" data-capitulo="1">
+          <p class="capitulo__etiqueta">02 — O orçamento</p>
+          <h1 class="capitulo__titulo">Escopo, prazo e preço.<br />Por escrito, antes.</h1>
+          <p class="capitulo__texto">
+            O que está dentro e o que está fora fica claro antes de qualquer pagamento. 30% pra começar, 70% só na
+            entrega aceita. Mudança de escopo depois é orçada à parte — nunca cobrada por surpresa.
+          </p>
+        </article>
+
+        <article class="capitulo" data-capitulo="2">
+          <p class="capitulo__etiqueta">03 — A entrega</p>
+          <h1 class="capitulo__titulo">No ar, funcionando,<br />e seu.</h1>
+          <p class="capitulo__texto">
+            O sistema é da sua empresa: sem aluguel de licença por usuário e sem trava pra te segurar. Hospedagem,
+            manutenção e suporte seguem na mensalidade — serviço, não permissão de uso.
+          </p>
+        </article>
+      </div>
+
+          <p class="dica" id="dica">
+            <span class="dica__texto">role a página</span>
+            <span class="dica__seta" aria-hidden="true">↓</span>
+          </p>
+
+          <!-- A régua é o relógio do vídeo: mostra em que ponto da história a
+               rolagem está. `role="presentation"` porque o mesmo dado já está
+               no texto — ela é reforço visual, não informação exclusiva. -->
+          <div class="regua" role="presentation">
+            <div class="regua__trilho"><div class="regua__preenchimento" id="preenchimento"></div></div>
+            <ol class="regua__marcas" id="marcas">
+              <li class="is-ativo">A conversa</li>
+              <li>O orçamento</li>
+              <li>A entrega</li>
+              <li>A mensalidade</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ato 04. Fundo sólido: é esta seção que cobre o vídeo fixo e diz que
+           o filme acabou. Aqui a pessoa já viu como o trabalho acontece e o
+           que falta é a conta — inclusive a de quem não quer (ou não pode)
+           tirar o valor inteiro do caixa de uma vez. -->
+      <section class="fim" id="fim">
+        <div class="fim__interno">
+          <p class="capitulo__etiqueta">04 — A mensalidade</p>
+          <h2 class="fim__titulo">Dá pra pagar mensalmente.</h2>
+          <p class="fim__texto">
+            O sistema é feito sob medida do mesmo jeito — muda só como ele é pago. Quem prefere não tirar o valor
+            inteiro do caixa de uma vez fecha numa mensalidade combinada antes de começar.
+          </p>
+
+          <!-- As duas formas lado a lado, na mesma medida: quem compara
+               precisa ver as duas de uma vez, não uma depois da outra. -->
+          <div class="formas">
+            <article class="forma">
+              <p class="forma__etiqueta">Por etapas</p>
+              <p class="forma__valor">30<span>%</span> <span class="forma__mais">+</span> 70<span>%</span></p>
+              <p class="forma__texto">
+                30% liberam o desenvolvimento depois do orçamento aprovado; os 70% só são cobrados com o sistema no ar
+                e aceito por você.
+              </p>
+              <ul class="forma__lista">
+                <li>Dois pagamentos, e acabou</li>
+                <li>O saldo depende do seu aceite</li>
+              </ul>
+            </article>
+
+            <article class="forma forma--destaque">
+              <p class="forma__etiqueta">Mensal</p>
+              <p class="forma__valor">1<span>×</span> <span class="forma__mais">por</span> mês</p>
+              <p class="forma__texto">
+                Uma parcela fixa, combinada antes de a primeira linha ser escrita. O desenvolvimento começa igual e o
+                acompanhamento por etapas é o mesmo.
+              </p>
+              <ul class="forma__lista">
+                <li>Sem tirar o valor inteiro do caixa</li>
+                <li>Previsível: o mesmo valor todo mês</li>
+              </ul>
+            </article>
+          </div>
+
+          <p class="fim__nota">
+            Qual das duas sai melhor depende do tamanho do projeto. O orçamento mostra <strong>os dois números</strong>,
+            por escrito, antes de você escolher — e o que entra em cada um fica escrito junto.
+          </p>
+
+          <div class="fim__acoes">
+            <a class="botao botao--claro" href="/comecar">Começar um projeto</a>
+            <a
+              class="botao"
+              href="https://wa.me/5569992264398?text=Oi!%20Vim%20pelo%20site%20da%20Feny%20e%20queria%20saber%20sobre%20pagar%20o%20sistema%20mensalmente."
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Perguntar sobre a mensalidade
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

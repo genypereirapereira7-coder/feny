@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.audit",
     "apps.customers",
+    "apps.leads",
     "apps.documents",
     "apps.quotations",
     "apps.projects",
@@ -133,7 +134,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Frontend (React/Vite) roda em origem separada — CORS_ALLOWED_ORIGINS tem um
 # default de dev (a porta padrão do `npm run dev`) pra funcionar sem precisar
 # editar `.env`; staging/production sobrescrevem via variável de ambiente.
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
+# 5173 é o Vite (painel em desenvolvimento); 4200 é o servidor estático da
+# landing. Em produção os dois são servidos pelo próprio Django, mesma
+# origem, e esta lista não é usada.
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS", default=["http://localhost:5173", "http://localhost:4200"]
+)
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
@@ -152,12 +158,17 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 25,
     "EXCEPTION_HANDLER": "apps.core.exceptions.custom_exception_handler",
     # Rate limiting (§13) — só nos endpoints que declaram `throttle_scope`
-    # (login e o webhook do Mercado Pago); o resto da API não é limitado por
-    # aqui, pra não pré-otimizar um limite genérico sem necessidade real.
+    # (login, o webhook do Mercado Pago e o formulário público do site); o
+    # resto da API não é limitado por aqui, pra não pré-otimizar um limite
+    # genérico sem necessidade real.
     "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.ScopedRateThrottle",),
     "DEFAULT_THROTTLE_RATES": {
         "login": "10/min",
         "mercadopago-webhook": "60/min",
+        # Formulário de contato do site institucional — é a única porta da
+        # API aberta sem login, então precisa de teto por IP. 5/min deixa
+        # passar quem errou um campo e reenviou, e corta script de spam.
+        "lead-public": "5/min",
     },
 }
 
