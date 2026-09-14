@@ -40,23 +40,6 @@ const PRECISAO = 0.0005
 
 const movimentoReduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-/* No celular o vídeo não é percorrido: ele toca em laço.
- *
- * Não é preferência de estilo, é o que o aparelho permite. O Safari do iPhone
- * não desenha quadro de um vídeo que nunca tocou — posicionar o `currentTime`
- * nele devolve tela preta — e `play()` sem gesto do usuário é recusado. O
- * resultado de insistir no modo "rolagem controla o tempo" é exatamente o que
- * aparecia: fundo preto no celular e cena nenhuma.
- *
- * Tocando em laço, o vídeo aparece de imediato, e os capítulos continuam
- * trocando com a rolagem — que é o que a página precisa comunicar. O percurso
- * quadro a quadro fica sendo o que sempre foi: um carinho pra quem tem mouse.
- *
- * Começa como palpite (`pointer: coarse`) e vira certeza depois: se o aparelho
- * recusar o `play()` inicial, o modo troca sozinho — ver `aoCarregar`. Palpite
- * de aparelho erra, recusa de `play()` não. */
-let tocaEmLaco = window.matchMedia("(pointer: coarse)").matches
-
 let alvo = 0
 let atual = 0
 let alvoParalaxeX = 0
@@ -70,63 +53,49 @@ let ultimoInstante = 0
 
 /* ---------------------------------------------------------------- o vídeo */
 
-/* O vídeo já nasce tocando em laço (`autoplay loop` no HTML). Isso inverte
-   quem precisa de permissão: o celular fica no caminho que o navegador
-   executa sozinho, e é o computador que toma o controle pra percorrer.
+/* Um caminho só, para qualquer aparelho: o vídeo nasce tocando (`autoplay
+ * loop` no HTML) e o script assume o controle assim que ele tocou de verdade.
+ *
+ * A ordem é o que faz funcionar no iPhone. O Safari não desenha quadro de um
+ * vídeo que nunca tocou — posicionar o `currentTime` nele devolve tela preta —
+ * e também não carrega nada antes do `play()`. Deixando o atributo tocar
+ * primeiro, o decodificador acende sozinho, sem gesto e sem permissão; a
+ * partir daí posicionar o vídeo é aceito, e a rolagem passa a comandar o
+ * tempo no celular igual ao computador.
+ *
+ * Por isso o controle é tomado no evento `playing`, e não em `loadedmetadata`:
+ * metadados chegam antes do primeiro quadro, e assumir ali deixaria o
+ * decodificador apagado — que era exatamente o defeito de antes. O preço é a
+ * fração de segundo em que o vídeo aparece tocando, que ninguém estranha num
+ * fundo de tela. */
+let assumido = false
 
-   A ordem antiga fazia o contrário e travava no iPhone: o script esperava o
-   evento de carga pra só então chamar `play()`, e o Safari não carrega nada
-   antes do `play()`. Um esperava o outro, e o vídeo ficava parado na capa. */
-if (tocaEmLaco) {
-  /* Já está tocando pelo atributo. `tocar()` aqui é só a rede de segurança
-     pra quando o sistema recusa (Modo de Baixo Consumo, aba em segundo
-     plano): ele arma o primeiro toque da pessoa como o gesto que libera. */
-  tocar()
-} else {
-  /* Quem tem mouse assume o comando: pausa e passa a posicionar o vídeo pela
-     rolagem. Mas só **depois** que ele tocou de verdade.
-     
-     A diferença importa num aparelho específico: o iPad com trackpad, que se
-     declara ponteiro fino (tem mouse) e continua sendo Safari (não desenha
-     quadro de vídeo que nunca tocou). Pausando no `loadedmetadata`, que vem
-     antes do primeiro quadro, o decodificador nunca acordaria e a rolagem
-     moveria um vídeo invisível. Esperar o `playing` acende o decodificador em
-     qualquer aparelho — e custa a fração de segundo em que o vídeo aparece
-     tocando, que ninguém estranha num fundo de tela. */
-  let assumido = false
-
-  const assumirControle = () => {
-    if (assumido) return
-    assumido = true
-    video.loop = false
-    video.pause()
-    aplicarTempo(alvo)
-  }
-
-  video.addEventListener("playing", assumirControle, { once: true })
-
-  /* Se o autoplay for recusado, `playing` nunca chega. Em navegador de
-     computador posicionar o vídeo funciona mesmo sem ele ter tocado, então
-     depois de um tempo curto assumimos assim mesmo. */
-  setTimeout(assumirControle, 1200)
+function assumirControle() {
+  if (assumido) return
+  assumido = true
+  video.loop = false
+  video.pause()
+  aplicarTempo(alvo)
 }
 
-/* `muted` também pela propriedade, e não só pelo atributo: é a condição que o
-   navegador checa pra deixar tocar sozinho, e há versões do Safari em que o
-   atributo no HTML não basta. */
+video.addEventListener("playing", assumirControle, { once: true })
+
+/* Se o autoplay for recusado — Modo de Baixo Consumo, aba aberta em segundo
+   plano — `playing` não chega e a capa fica na tela. O primeiro toque da
+   pessoa vira o gesto que libera: o vídeo toca, `playing` dispara, o controle
+   é assumido e a rolagem passa a comandar como em todo mundo. */
 function tocar() {
   video.muted = true
   const tentativa = video.play()
   if (tentativa && typeof tentativa.then === "function") {
     tentativa.catch(() => {
-      /* Recusado. A capa continua na tela, e a primeira vez que a pessoa
-         tocar em qualquer lugar vira o gesto que libera — é a única porta que
-         o sistema deixa aberta. */
       document.addEventListener("touchstart", tocar, { once: true, passive: true })
       document.addEventListener("click", tocar, { once: true })
     })
   }
 }
+
+tocar()
 
 function aplicarTempo(fracao) {
   if (!video.duration) return
@@ -149,15 +118,6 @@ function progressoDoFilme() {
 function aoRolar() {
   alvo = progressoDoFilme()
   if (alvo > 0.02) dica.classList.add("is-oculta")
-
-  /* Tocando em laço, o tempo do vídeo é do próprio vídeo: aqui só resta
-     acompanhar o texto e a régua. */
-  if (tocaEmLaco) {
-    preenchimento.style.transform = `scaleX(${alvo})`
-    trocarCapitulo(alvo)
-    return
-  }
-
   ligarLaco()
 }
 
@@ -208,7 +168,10 @@ function passo(instante) {
   paralaxeX += (alvoParalaxeX - paralaxeX) * fator
   paralaxeY += (alvoParalaxeY - paralaxeY) * fator
 
-  if (!tocaEmLaco) aplicarTempo(atual)
+  /* Só posiciona depois de o controle ter sido assumido: até lá o vídeo está
+     tocando sozinho, e mandar ele pular enquanto toca briga com a própria
+     reprodução. */
+  if (assumido) aplicarTempo(atual)
   preenchimento.style.transform = `scaleX(${atual})`
 
   if (!movimentoReduzido) {
