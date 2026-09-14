@@ -70,31 +70,45 @@ let ultimoInstante = 0
 
 /* ---------------------------------------------------------------- o vídeo */
 
-function aoCarregar() {
-  if (tocaEmLaco) {
-    video.loop = true
-    tocar()
-    return
+/* O vídeo já nasce tocando em laço (`autoplay loop` no HTML). Isso inverte
+   quem precisa de permissão: o celular fica no caminho que o navegador
+   executa sozinho, e é o computador que toma o controle pra percorrer.
+
+   A ordem antiga fazia o contrário e travava no iPhone: o script esperava o
+   evento de carga pra só então chamar `play()`, e o Safari não carrega nada
+   antes do `play()`. Um esperava o outro, e o vídeo ficava parado na capa. */
+if (tocaEmLaco) {
+  /* Já está tocando pelo atributo. `tocar()` aqui é só a rede de segurança
+     pra quando o sistema recusa (Modo de Baixo Consumo, aba em segundo
+     plano): ele arma o primeiro toque da pessoa como o gesto que libera. */
+  tocar()
+} else {
+  /* Quem tem mouse assume o comando: pausa e passa a posicionar o vídeo pela
+     rolagem. Mas só **depois** que ele tocou de verdade.
+     
+     A diferença importa num aparelho específico: o iPad com trackpad, que se
+     declara ponteiro fino (tem mouse) e continua sendo Safari (não desenha
+     quadro de vídeo que nunca tocou). Pausando no `loadedmetadata`, que vem
+     antes do primeiro quadro, o decodificador nunca acordaria e a rolagem
+     moveria um vídeo invisível. Esperar o `playing` acende o decodificador em
+     qualquer aparelho — e custa a fração de segundo em que o vídeo aparece
+     tocando, que ninguém estranha num fundo de tela. */
+  let assumido = false
+
+  const assumirControle = () => {
+    if (assumido) return
+    assumido = true
+    video.loop = false
+    video.pause()
+    aplicarTempo(alvo)
   }
 
-  aplicarTempo(alvo)
+  video.addEventListener("playing", assumirControle, { once: true })
 
-  /* Tocar e pausar no mesmo instante parece inútil, e não é: um vídeo que
-     nunca tocou pode não ter quadro desenhado ao ser posicionado. Este par
-     acorda o decodificador. */
-  const tentativa = video.play()
-  if (tentativa && typeof tentativa.then === "function") {
-    tentativa.then(() => video.pause()).catch(() => {
-      /* Recusa aqui é o sinal de que este aparelho está em modo restritivo —
-         iPad com trackpad (que se declara ponteiro fino e mesmo assim é
-         Safari), economia de bateria ligada, aba aberta em segundo plano. É
-         exatamente onde posicionar o vídeo devolveria tela preta, então o
-         modo muda sozinho em vez de insistir. */
-      tocaEmLaco = true
-      video.loop = true
-      tocar()
-    })
-  }
+  /* Se o autoplay for recusado, `playing` nunca chega. Em navegador de
+     computador posicionar o vídeo funciona mesmo sem ele ter tocado, então
+     depois de um tempo curto assumimos assim mesmo. */
+  setTimeout(assumirControle, 1200)
 }
 
 /* `muted` também pela propriedade, e não só pelo atributo: é a condição que o
@@ -105,23 +119,13 @@ function tocar() {
   const tentativa = video.play()
   if (tentativa && typeof tentativa.then === "function") {
     tentativa.catch(() => {
-      /* Recusado (economia de bateria ligada, aba em segundo plano). A capa
-         continua na tela, e a primeira vez que a pessoa tocar em qualquer
-         lugar vira o gesto que libera — é a única porta que o sistema deixa
-         aberta. */
+      /* Recusado. A capa continua na tela, e a primeira vez que a pessoa
+         tocar em qualquer lugar vira o gesto que libera — é a única porta que
+         o sistema deixa aberta. */
       document.addEventListener("touchstart", tocar, { once: true, passive: true })
       document.addEventListener("click", tocar, { once: true })
     })
   }
-}
-
-/* O `<video>` está no HTML acima deste script, então ele pode já ter dados
-   quando chegamos aqui — e um ouvinte de `loadeddata` nunca dispararia.
-   `readyState >= 2` (HAVE_CURRENT_DATA) é "já tem quadro pra mostrar". */
-if (video.readyState >= 2) {
-  aoCarregar()
-} else {
-  video.addEventListener("loadeddata", aoCarregar, { once: true })
 }
 
 function aplicarTempo(fracao) {

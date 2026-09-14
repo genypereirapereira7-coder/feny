@@ -52,14 +52,21 @@
          pra mostrar — e no iOS ele só tem depois de tocar uma vez — é a capa
          que aparece, em vez de um retângulo preto.
 
-         No celular o vídeo não é percorrido: ele toca em laço (ver script.js).
-         O iPhone recusa posicionar um vídeo que nunca tocou, e insistir nisso
-         é trocar uma imagem por uma tela preta. -->
+         `autoplay loop` no elemento, e não no script: é o caminho que o
+         navegador conhece sozinho. No iPhone é o único que funciona sem gesto
+         do usuário — e ele ignora `preload`, então esperar o vídeo carregar
+         pra só então mandar tocar é um impasse: não carrega porque não tocou,
+         não toca porque não carregou.
+
+         Quem tem mouse recebe o comando de volta: o script pausa assim que há
+         metadados e passa a posicionar o vídeo pela rolagem (ver script.js). -->
     <video
       id="fundo"
       class="fundo"
       src="video.mp4"
       poster="poster.jpg"
+      autoplay
+      loop
       muted
       playsinline
       webkit-playsinline
