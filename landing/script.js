@@ -40,6 +40,19 @@ const PRECISAO = 0.0005
 
 const movimentoReduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
+/* No celular o vídeo não é percorrido: ele toca em laço.
+ *
+ * Não é preferência de estilo, é o que o aparelho permite. O Safari do iPhone
+ * não desenha quadro de um vídeo que nunca tocou — posicionar o `currentTime`
+ * nele devolve tela preta — e `play()` sem gesto do usuário é recusado. O
+ * resultado de insistir no modo "rolagem controla o tempo" é exatamente o que
+ * aparecia: fundo preto no celular e cena nenhuma.
+ *
+ * Tocando em laço, o vídeo aparece de imediato, e os capítulos continuam
+ * trocando com a rolagem — que é o que a página precisa comunicar. O percurso
+ * quadro a quadro fica sendo o que sempre foi: um carinho pra quem tem mouse. */
+const tocaEmLaco = window.matchMedia("(pointer: coarse)").matches
+
 let alvo = 0
 let atual = 0
 let alvoParalaxeX = 0
@@ -54,17 +67,39 @@ let ultimoInstante = 0
 /* ---------------------------------------------------------------- o vídeo */
 
 function aoCarregar() {
-  video.classList.add("is-pronto")
+  if (tocaEmLaco) {
+    video.loop = true
+    tocar()
+    return
+  }
+
   aplicarTempo(alvo)
 
-  /* Tocar e pausar no mesmo instante parece inútil, e não é: no iOS um vídeo
-     que nunca tocou não desenha quadro nenhum ao ser posicionado — a tela
-     fica preta por mais que o `currentTime` mude. Este par acorda o
-     decodificador. O `catch` é porque o navegador pode recusar o `play()` sem
-     gesto do usuário, e aí seguimos sem ele: no desktop funciona. */
+  /* Tocar e pausar no mesmo instante parece inútil, e não é: um vídeo que
+     nunca tocou pode não ter quadro desenhado ao ser posicionado. Este par
+     acorda o decodificador. O `catch` é porque o navegador pode recusar o
+     `play()` sem gesto do usuário — no computador quase nunca recusa. */
   const tentativa = video.play()
   if (tentativa && typeof tentativa.then === "function") {
     tentativa.then(() => video.pause()).catch(() => {})
+  }
+}
+
+/* `muted` também pela propriedade, e não só pelo atributo: é a condição que o
+   navegador checa pra deixar tocar sozinho, e há versões do Safari em que o
+   atributo no HTML não basta. */
+function tocar() {
+  video.muted = true
+  const tentativa = video.play()
+  if (tentativa && typeof tentativa.then === "function") {
+    tentativa.catch(() => {
+      /* Recusado (economia de bateria ligada, aba em segundo plano). A capa
+         continua na tela, e a primeira vez que a pessoa tocar em qualquer
+         lugar vira o gesto que libera — é a única porta que o sistema deixa
+         aberta. */
+      document.addEventListener("touchstart", tocar, { once: true, passive: true })
+      document.addEventListener("click", tocar, { once: true })
+    })
   }
 }
 
@@ -98,6 +133,15 @@ function progressoDoFilme() {
 function aoRolar() {
   alvo = progressoDoFilme()
   if (alvo > 0.02) dica.classList.add("is-oculta")
+
+  /* Tocando em laço, o tempo do vídeo é do próprio vídeo: aqui só resta
+     acompanhar o texto e a régua. */
+  if (tocaEmLaco) {
+    preenchimento.style.transform = `scaleX(${alvo})`
+    trocarCapitulo(alvo)
+    return
+  }
+
   ligarLaco()
 }
 
@@ -148,7 +192,7 @@ function passo(instante) {
   paralaxeX += (alvoParalaxeX - paralaxeX) * fator
   paralaxeY += (alvoParalaxeY - paralaxeY) * fator
 
-  aplicarTempo(atual)
+  if (!tocaEmLaco) aplicarTempo(atual)
   preenchimento.style.transform = `scaleX(${atual})`
 
   if (!movimentoReduzido) {

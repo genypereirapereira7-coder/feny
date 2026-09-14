@@ -42,14 +42,6 @@ video {
   /* `cover` corta as bordas em vez de deformar a cena. Vídeo esticado é o
      erro mais visível que um fundo em vídeo pode ter. */
   object-fit: cover;
-  /* Nasce quase invisível; o script revela quando há quadro pronto pra
-     mostrar — sem isto, a primeira pintura é um retângulo preto. */
-  opacity: 0;
-  transition: opacity 1.2s var(--curva);
-}
-
-.fundo.is-pronto {
-  opacity: 1;
 }
 
 .veu,

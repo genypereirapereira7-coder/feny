@@ -43,16 +43,26 @@
          entrar na ordem do Tab. Quem navega por teclado controla a linha do
          tempo pelas setas (ver script.js).
 
-         `preload="auto"` é obrigatório aqui, não otimização: arrastar a linha
-         do tempo exige que os quadros já estejam no navegador. Com `metadata`
-         cada movimento do mouse viraria uma requisição de trecho e o efeito
-         engasgaria. -->
+         `preload="auto"` é obrigatório no computador, não é otimização: mover
+         a linha do tempo exige que os quadros já estejam no navegador. Com
+         `metadata`, cada passo da rolagem viraria uma requisição de trecho e
+         o efeito engasgaria.
+
+         `poster` existe por causa do celular: enquanto o vídeo não tem quadro
+         pra mostrar — e no iOS ele só tem depois de tocar uma vez — é a capa
+         que aparece, em vez de um retângulo preto.
+
+         No celular o vídeo não é percorrido: ele toca em laço (ver script.js).
+         O iPhone recusa posicionar um vídeo que nunca tocou, e insistir nisso
+         é trocar uma imagem por uma tela preta. -->
     <video
       id="fundo"
       class="fundo"
       src="video.mp4"
+      poster="poster.jpg"
       muted
       playsinline
+      webkit-playsinline
       preload="auto"
       aria-hidden="true"
       tabindex="-1"
