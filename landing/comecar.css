@@ -17,6 +17,10 @@
 .topo--solido {
   border-bottom: 1px solid var(--linha, rgb(244 246 251 / 0.1));
   background: rgb(5 6 10 / 0.9);
+  /* Safari só passou a entender `backdrop-filter` sem prefixo no 15.4; sem
+     esta linha, a barra do topo fica sem o desfoque no iPhone e o texto
+     atravessa por trás dela. */
+  -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
 }
 
