@@ -24,6 +24,11 @@ environ.Env.read_env(BASE_DIR / ".env")
 # em produção.
 _SECRET_KEY_DEV = "django-insecure-fallback-temporario-troque-em-producao"
 
+# As duas chaves de dev que este repositório publica: a de cima (fallback deste
+# arquivo) e a do `.env.example`, que vai junto pra qualquer um que copie o
+# exemplo sem trocar o valor. Nenhuma das duas pode valer em produção.
+_CHAVES_PUBLICADAS = frozenset({_SECRET_KEY_DEV, "dev-inseguro-troque-em-producao"})
+
 SECRET_KEY = os.getenv("SECRET_KEY", _SECRET_KEY_DEV)
 
 # Estamos num ambiente de verdade? Duas pistas independentes: o módulo de
@@ -35,7 +40,7 @@ _EM_PRODUCAO = _SETTINGS_MODULE.endswith(("production", "staging")) or any(
     os.environ.get(marca) for marca in _MARCAS_DE_HOSPEDAGEM
 )
 
-if _EM_PRODUCAO and SECRET_KEY == _SECRET_KEY_DEV:
+if _EM_PRODUCAO and SECRET_KEY in _CHAVES_PUBLICADAS:
     # **Não derruba o arranque.** Foi exatamente o `ImproperlyConfigured` que
     # quebrou o primeiro deploy, e trocar um erro de partida por outro não
     # resolve nada. Uma chave sorteada agora assina tão bem quanto uma do
