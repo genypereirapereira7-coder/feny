@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 
 from apps.core.views import health, spa_index
+from apps.leads.views import webhook_whatsapp_ia
 from apps.mercadopago.webhooks import MercadoPagoWebhookView
 
 urlpatterns = [
@@ -21,6 +22,10 @@ urlpatterns = [
     path("api/v1/settings/", include("apps.core.api.urls")),
     path("api/v1/dashboard/", include("apps.dashboard.api.urls")),
     path("api/v1/reports/", include("apps.reports.api.urls")),
+    # Webhook do agente de IA do WhatsApp (Typebot). Fica sob /api/v1/ — ao
+    # contrário do webhook do Mercado Pago, que segue o contrato do provedor —
+    # porque aqui o contrato é nosso: quem se adapta é o fluxo do Typebot.
+    path("api/v1/webhook-ia/", webhook_whatsapp_ia, name="webhook-whatsapp-ia"),
     # Fora do /api/v1/ de propósito — webhook de provedor externo (ARCHITECTURE.md §12).
     path("api/webhooks/mercadopago/", MercadoPagoWebhookView.as_view(), name="mercadopago-webhook"),
 ]

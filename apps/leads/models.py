@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.core.choices import ProjectType
@@ -113,3 +116,54 @@ class Lead(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.name} — {self.get_status_display()}"
+
+
+class ClientePotencial(BaseModel):
+    """Negócio fechado pelo agente de IA no WhatsApp (Typebot + Evolution API).
+
+    Chega por `views.webhook_whatsapp_ia` quando a conversa atinge a palavra
+    `[FECHADO]`: o robô já conversou, entendeu o projeto e estimou um valor.
+    É um estágio adiante do `Lead` acima, que é o contato cru do formulário do
+    site — por isso os campos são outros (aqui já existe descrição de projeto
+    e valor; lá existe faixa de orçamento e mensagem solta).
+
+    O telefone é a chave única de verdade: no WhatsApp é ele que identifica a
+    pessoa, e a mesma conversa reenviada pelo Typebot (retentativa, clique
+    duplo no fluxo) não pode virar dois registros. Guardado só em dígitos e
+    sem o +55, mesma disciplina de `Lead.phone` e `Customer.document`.
+    """
+
+    nome = models.CharField(max_length=150)
+    telefone = models.CharField(max_length=11, unique=True)
+    descricao_projeto = models.TextField()
+
+    # `null=True` de propósito, e é a única liberdade que este modelo toma em
+    # relação ao pedido: fechamento sem valor declarado continua sendo
+    # fechamento. Exigir o número faria o webhook recusar a conversa inteira
+    # quando o robô não conseguisse extrair o valor — trocar um dado que falta
+    # por todos os outros que já vieram.
+    valor_estimado = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+
+    class Meta:
+        verbose_name = "cliente potencial"
+        verbose_name_plural = "clientes potenciais"
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"{self.nome} ({self.telefone})"
+
+    @property
+    def data_cadastro(self):
+        """Apelido de leitura pro `created_at` que vem do `BaseModel`.
+
+        O nome pedido na especificação é este; a coluna não é criada duas
+        vezes porque duas datas de cadastro no mesmo registro são duas coisas
+        que podem discordar — e a que o resto da plataforma lê é `created_at`.
+        """
+        return self.created_at

@@ -15,10 +15,49 @@ environ.Env.read_env(BASE_DIR / ".env")
 # `os.getenv` com fallback em vez de `env("SECRET_KEY")` — este último levanta
 # `ImproperlyConfigured` e derruba o processo se a variável não existir, o
 # que já quebrou o primeiro deploy antes de qualquer chance de configurar a
-# variável de verdade no painel do provedor. O fallback é obviamente inseguro
-# (mesma string pra qualquer instância que esquecer de configurar) — sempre
-# defina `SECRET_KEY` de verdade em staging/produção.
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-fallback-temporario-troque-em-producao")
+# variável de verdade no painel do provedor.
+#
+# O fallback é de desenvolvimento, e é **público**: está escrito aqui, num
+# repositório aberto. Quem o conhece assina sessão do Django e token JWT
+# (`SIMPLE_JWT` usa a SECRET_KEY pra assinar) — ou seja, entra como qualquer
+# usuário sem saber senha nenhuma. Por isso ele não pode simplesmente valer
+# em produção.
+_SECRET_KEY_DEV = "django-insecure-fallback-temporario-troque-em-producao"
+
+SECRET_KEY = os.getenv("SECRET_KEY", _SECRET_KEY_DEV)
+
+# Estamos num ambiente de verdade? Duas pistas independentes: o módulo de
+# settings escolhido e as variáveis que o próprio provedor injeta.
+_MARCAS_DE_HOSPEDAGEM = ("RAILWAY_ENVIRONMENT", "RAILWAY_PROJECT_ID", "RENDER", "FLY_APP_NAME")
+_SETTINGS_MODULE = os.getenv("DJANGO_SETTINGS_MODULE", "")
+
+_EM_PRODUCAO = _SETTINGS_MODULE.endswith(("production", "staging")) or any(
+    os.environ.get(marca) for marca in _MARCAS_DE_HOSPEDAGEM
+)
+
+if _EM_PRODUCAO and SECRET_KEY == _SECRET_KEY_DEV:
+    # **Não derruba o arranque.** Foi exatamente o `ImproperlyConfigured` que
+    # quebrou o primeiro deploy, e trocar um erro de partida por outro não
+    # resolve nada. Uma chave sorteada agora assina tão bem quanto uma do
+    # painel; o que se perde é permanência — a cada reinício ela é outra, e
+    # quem estava logado no painel digita a senha de novo.
+    import logging as _logging
+    import secrets as _secrets
+
+    SECRET_KEY = _secrets.token_urlsafe(50)
+    _logging.getLogger(__name__).error(
+        "\n"
+        "  ============================================================\n"
+        "   SECRET_KEY NAO ESTA DEFINIDA\n"
+        "  ============================================================\n"
+        "   O padrao do codigo esta publicado no repositorio: com ele,\n"
+        "   qualquer pessoa assina sessao e token JWT deste sistema.\n"
+        "\n"
+        "   Subi com uma chave sorteada agora, so pra esta execucao.\n"
+        "   Defina a variavel no painel:\n"
+        "       python -c \"import secrets; print(secrets.token_urlsafe(50))\"\n"
+        "  ============================================================\n"
+    )
 DEBUG = False
 
 INSTALLED_APPS = [
@@ -195,6 +234,13 @@ MERCADOPAGO_BASE_URL = env("MERCADOPAGO_BASE_URL", default="https://api.mercadop
 # A proteção que não é opcional é a verificação via `client.get_payment`
 # logo abaixo — o webhook nunca dá baixa financeira só porque a assinatura bateu.
 MERCADOPAGO_WEBHOOK_SECRET = env("MERCADOPAGO_WEBHOOK_SECRET", default="")
+
+# Agente de IA do WhatsApp (Typebot). Segredo combinado, conferido no cabeçalho
+# `X-Webhook-Token` por `apps.leads.views.webhook_whatsapp_ia`. Sem ele o
+# webhook recusa tudo, de propósito: é uma porta aberta pra internet que
+# escreve no banco, e deploy sem a variável fica sem integração (problema
+# visível) em vez de ficar sem tranca (problema invisível).
+WHATSAPP_IA_WEBHOOK_TOKEN = env("WHATSAPP_IA_WEBHOOK_TOKEN", default="")
 
 # Evolution API (ARCHITECTURE.md §6.9, §11). Sem configurar, `whatsapp.client`
 # recusa com um erro claro — `notifications.dispatch_pending` marca a

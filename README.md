@@ -88,6 +88,56 @@ ffmpeg -i banner.png -vf "scale=1200:-2,crop=1200:630:0:22" -q:v 4 og.jpg
 
 O `index.html` guarda o caminho **relativo** (`/midia/og.jpg`) e o Django o transforma em endereço absoluto na hora de servir (`apps/core/views.py::spa_index`), montado a partir do host da requisição. WhatsApp e Facebook descartam caminho relativo — a prévia sairia sem imagem — e o domínio muda entre `localhost`, Railway e um domínio próprio, então um endereço fixo no HTML seria escolher um dos três pra funcionar e descobrir os outros dois quebrados só quando alguém colasse o link. A `og:url` é injetada pelo mesmo caminho, sem a query string, pra que o link de campanha (`?utm_source=...`) aponte pro mesmo lugar que o link limpo.
 
+## Agente de IA no WhatsApp (Typebot)
+
+Quando a conversa do agente chega a um acordo, o fluxo do Typebot posta em
+`POST /api/v1/webhook-ia/` e o fechamento vira um `ClientePotencial`
+(`apps/leads`). É a **segunda** porta da plataforma aberta pra internet — a
+primeira é o formulário do site — e ela responde três perguntas antes de
+escrever no banco:
+
+| Pergunta | Como |
+|---|---|
+| Quem está batendo? | Segredo combinado no cabeçalho `X-Webhook-Token`, comparado em tempo constante |
+| O que veio? | Só grava com `[FECHADO]` no payload, telefone válido, nome e descrição presentes |
+| E se vier duas vezes? | `telefone` é único e a escrita é `update_or_create` |
+
+**Sem `WHATSAPP_IA_WEBHOOK_TOKEN` configurado o webhook recusa tudo**, de
+propósito: deploy sem a variável fica sem integração (problema visível) em vez
+de ficar sem tranca (problema invisível). Gere o valor com:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+No Typebot, o bloco de webhook precisa mandar esse mesmo valor no cabeçalho:
+
+```
+POST https://SEU-DOMINIO/api/v1/webhook-ia/
+X-Webhook-Token: <o mesmo valor da variável>
+Content-Type: application/json
+
+{
+  "texto": "{{resumo}} [FECHADO]",
+  "nome": "{{nome}}",
+  "telefone": "{{telefone}}",
+  "descricao_projeto": "{{projeto}}",
+  "valor_estimado": "{{valor}}"
+}
+```
+
+Os nomes dos campos são tolerantes (`telefone`/`phone`/`whatsapp`,
+`descricao_projeto`/`projeto`/`description`…) e o payload pode aninhá-los em
+`variables`, `data` ou `payload` — renomear uma variável no Typebot não derruba
+a integração em silêncio. O valor aceita `"R$ 12.500,00"`, `"12500.00"` e
+`12500`; valor ilegível entra como vazio em vez de recusar o fechamento.
+
+**`ClientePotencial` e `Lead` convivem** e são estágios diferentes: `Lead` é o
+contato cru do formulário do site (faixa de orçamento, mensagem solta);
+`ClientePotencial` é a conversa que o agente já qualificou (projeto descrito,
+valor estimado). Se um dia fizer sentido ter uma fila só, a junção é uma
+migração — não uma reescrita.
+
 ## Como rodar localmente
 
 Com Docker:
