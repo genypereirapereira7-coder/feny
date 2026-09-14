@@ -50,8 +50,12 @@ const movimentoReduzido = window.matchMedia("(prefers-reduced-motion: reduce)").
  *
  * Tocando em laço, o vídeo aparece de imediato, e os capítulos continuam
  * trocando com a rolagem — que é o que a página precisa comunicar. O percurso
- * quadro a quadro fica sendo o que sempre foi: um carinho pra quem tem mouse. */
-const tocaEmLaco = window.matchMedia("(pointer: coarse)").matches
+ * quadro a quadro fica sendo o que sempre foi: um carinho pra quem tem mouse.
+ *
+ * Começa como palpite (`pointer: coarse`) e vira certeza depois: se o aparelho
+ * recusar o `play()` inicial, o modo troca sozinho — ver `aoCarregar`. Palpite
+ * de aparelho erra, recusa de `play()` não. */
+let tocaEmLaco = window.matchMedia("(pointer: coarse)").matches
 
 let alvo = 0
 let atual = 0
@@ -77,11 +81,19 @@ function aoCarregar() {
 
   /* Tocar e pausar no mesmo instante parece inútil, e não é: um vídeo que
      nunca tocou pode não ter quadro desenhado ao ser posicionado. Este par
-     acorda o decodificador. O `catch` é porque o navegador pode recusar o
-     `play()` sem gesto do usuário — no computador quase nunca recusa. */
+     acorda o decodificador. */
   const tentativa = video.play()
   if (tentativa && typeof tentativa.then === "function") {
-    tentativa.then(() => video.pause()).catch(() => {})
+    tentativa.then(() => video.pause()).catch(() => {
+      /* Recusa aqui é o sinal de que este aparelho está em modo restritivo —
+         iPad com trackpad (que se declara ponteiro fino e mesmo assim é
+         Safari), economia de bateria ligada, aba aberta em segundo plano. É
+         exatamente onde posicionar o vídeo devolveria tela preta, então o
+         modo muda sozinho em vez de insistir. */
+      tocaEmLaco = true
+      video.loop = true
+      tocar()
+    })
   }
 }
 
